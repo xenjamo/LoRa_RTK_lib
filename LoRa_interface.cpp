@@ -202,6 +202,10 @@ bool RFM95::transmit(uint8_t* data, int len){
     return true;
 }
 
+bool RFM95::receive(uint8_t* data, uint8_t* length){
+    //comment
+}
+
 
 /////////////////////////basic function to read a register
 
