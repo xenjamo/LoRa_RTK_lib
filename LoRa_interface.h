@@ -259,12 +259,16 @@ class RFM95
     bool receive(uint8_t *data, int *len);
     uint8_t flags;
     uint8_t flag_handler();
+    bool waitForTransmission();
 
     private:
     //some private stuff ;)
     SPI *_spi;
     DigitalOut _cs_pin;
     PinName _int_pin;
+    int rxBad;
+    uint8_t _lastSNR;
+    uint8_t _lastRssi;
     // Interrupts
     InterruptIn isrLora;
     void isr_flagger(); //can only set a flag since Serial functions cannot run in ISR context :(
