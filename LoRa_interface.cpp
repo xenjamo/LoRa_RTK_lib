@@ -23,7 +23,7 @@ bool RFM95::init(){
     // Set operation mode
     write(RH_RF95_REG_01_OP_MODE, RH_RF95_MODE_SLEEP | RH_RF95_LONG_RANGE_MODE);
     _mode = 0;
-
+    rxBad = 0;
     uint8_t data;
     int i = 1;
     while(1){
@@ -74,21 +74,61 @@ bool RFM95::init(){
 uint8_t RFM95::flag_handler(){
     flags = flags & !0x40; // clear flags --> correct flag gets set in this function
     uint8_t reg_flags = read(RH_RF95_REG_12_IRQ_FLAGS);
-    printf("INT_REG = 0x%x\n", reg_flags);
+    //rintf("INT_REG = 0x%x\n", reg_flags);
+    uint8_t crc_present = read(RH_RF95_REG_1C_HOP_CHANNEL);
 
-    if((reg_flags & 0x08) == 0x08){ //check if INT was a transmission
+    if(RH_RF95_RX_DONE & reg_flags){ ///////////////////////////////check if INT was a reception
+
+        printf("received data\n");
+
+        if(reg_flags & (RH_RF95_RX_TIMEOUT | RH_RF95_PAYLOAD_CRC_ERROR)){ //check if payload was bad or not
+            rxBad++;
+            printf("received crap\nBad Rx = %i\n", rxBad);
+            return false;
+        }
+        flags = flags | 0x02; //set internal flag to reception for further data handling
+        write(RH_RF95_REG_12_IRQ_FLAGS,0xff);
+        //start reading received data
+        uint8_t len = read(RH_RF95_REG_13_RX_NB_BYTES);
+        uint8_t _buf[len];
+
+        write(RH_RF95_REG_0D_FIFO_ADDR_PTR, read(RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)); // set some pointers
+        burstread(RH_RF95_REG_00_FIFO, _buf, len);
+
+
+
+        _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) / 4;// quality of packet  signal to noise ratio
+	    _lastRssi = read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
+
+        return flags;
+
+    }
+
+    
+    if(reg_flags & RH_RF95_TX_DONE){ //////////////////////////////check if INT was a transmission
         flags = flags | 0x01; // first bit sets transmission flag
 
-        printf("sucsessfully transmitted data\n");
+        //printf("sucsessfully transmitted data\n");
         write(RH_RF95_REG_12_IRQ_FLAGS,0xff); //clear INT registers
 
         setModeIdle();
         return flags;
     }
 
-
-
     return flags;
+}
+
+bool RFM95::waitForTransmission(){
+    int i = 0;
+    while(1){
+        i++;
+        if(flag_handler() == 0x01){
+            printf("transmission complete (i = %d \n)", i);
+            return 1;
+        }
+    }
+    printf("i'm impatient (timeout)\n");
+    return 0;
 }
 
 void RFM95::isr_flagger(){
@@ -119,7 +159,7 @@ bool RFM95::setModeRX(){
     reg = reg & 0xF7; //mask out stuff to keep
 
     write(RH_RF95_REG_01_OP_MODE,RH_RF95_MODE_RXSINGLE | reg); //set mode
-    write(RH_RF95_REG_40_DIO_MAPPING1,0x00); //set correct INT mapping so we can get RxDone Innterrupt
+    write(RH_RF95_REG_40_DIO_MAPPING1,0x00); //set correct INT mapping so we can get RxDone Interrupt
 
     /*check if mode is correct
     if(read(RH_RF95_REG_01_OP_MODE) != (RH_RF95_MODE_RXSINGLE | reg)){
@@ -135,7 +175,7 @@ bool RFM95::setModeContRX(){
     reg = reg & 0xF7; //mask out stuff to keep
 
     write(RH_RF95_REG_01_OP_MODE,RH_RF95_MODE_RXCONTINUOUS | reg);
-    write(RH_RF95_REG_40_DIO_MAPPING1,0x00); //set correct INT mapping so we can get RxDone Innterrupt
+    write(RH_RF95_REG_40_DIO_MAPPING1,0x00); //set correct INT mapping so we can get RxDone Interrupt
 
     /*check if mode is correct
     if(read(RH_RF95_REG_01_OP_MODE) != (RH_RF95_MODE_RXCONTINUOUS | reg)){
@@ -202,8 +242,10 @@ bool RFM95::transmit(uint8_t* data, int len){
     return true;
 }
 
-bool RFM95::receive(uint8_t* data, uint8_t* length){
-    //comment
+bool RFM95::receive(uint8_t* data, int* len){
+    printf("receiver signalled incoming data\n");
+
+    return true;
 }
 
 
