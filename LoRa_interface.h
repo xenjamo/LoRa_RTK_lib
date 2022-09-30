@@ -256,7 +256,7 @@ class RFM95
 
     //the functions you wanna use
     bool transmit(uint8_t *data, int len);
-    bool resceive(uint8_t *data, int *len);
+    bool receive(uint8_t *data, int *len);
     uint8_t flags;
     uint8_t flag_handler();
 
