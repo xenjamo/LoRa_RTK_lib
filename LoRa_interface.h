@@ -4,9 +4,10 @@
 *
 *
 */
-// The crystal oscillator frequency of the module
+
 #include <cstdint>
 #include "mbed.h"
+#include "RTK_states_and_events.h"
 
 // Max number of octets the LORA Rx/Tx FIFO can hold
 #define RH_RF95_FIFO_SIZE 255
@@ -230,32 +231,7 @@
 #define RH_RF95_PA_DAC_DISABLE                        0x04
 #define RH_RF95_PA_DAC_ENABLE                         0x07
 
-// statemachine stuff
-typedef enum{
-    SLEEP = 0,
-    IDLE,
-    FREQ_SYN_TX,
-    TX_SINGLE,
-    FREQ_SYN_RX,
-    RX_CONT,
-    RX_SINGLE,
-    CAD
-}state_;
 
-typedef enum{
-	NO_EVENT,
-	//interrupts
-	RX_TIMEOUT,
-	RX_DONE,
-	PAYLOADCRCERROR,
-	VALIDHEADER,
-	TX_DONE,
-	FHSS_CHANGE_CHANNEL,
-	CAD_DETECTED,
-	//custom
-	FIFO_WRITE_COMPLETE,
-	RX_BAD
-}event_;
 //til here
 
 // end of registers
@@ -298,6 +274,7 @@ class RFM95
     SPI *_spi;
     DigitalOut _cs_pin;
     PinName _int_pin;
+    Timeout tx_timer;
     int rxBad;
     uint8_t _lastSNR;
     uint8_t _lastRssi;

@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+BUILD
+.mbed
+mbed-os

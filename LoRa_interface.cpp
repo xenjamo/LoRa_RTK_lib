@@ -152,7 +152,7 @@ bool RFM95::waitForTransmission(){
     int i = 0;
     while(1){
         i++;
-        if(flag_handler() == 0x01){
+        if(event_handler() == 0x01){
             printf("transmission complete (i = %d \n)", i);
             return 1;
         }
@@ -180,7 +180,8 @@ bool RFM95::setModeTX(){
         return false;
     }
     */
-    state = TX_SINGLE;
+    //state = TX_SINGLE;
+    
     return true;
 }
 
