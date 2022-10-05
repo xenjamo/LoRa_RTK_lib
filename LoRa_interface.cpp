@@ -79,31 +79,18 @@ event_ RFM95::event_handler(){
     flags = flags & !0x40; // clear flags --> correct flag gets set in this function
 
     uint8_t reg_flags = read(RH_RF95_REG_12_IRQ_FLAGS);
-	
     uint8_t crc_present = read(RH_RF95_REG_1C_HOP_CHANNEL);
+    clearInt(); // reset interrupt register on lora module
 
     if(RH_RF95_RX_DONE & reg_flags){ ///////////////////////////////check if INT was a reception
-	
+	    
         if(reg_flags & (RH_RF95_RX_TIMEOUT | RH_RF95_PAYLOAD_CRC_ERROR)){ //check if payload was bad or not
             rxBad++;
+            
             return RX_BAD;
         }
+        readRxData();
 
-		//flags = flags | 0x02; //set internal flag to reception for further data handling
-        write(RH_RF95_REG_12_IRQ_FLAGS,0xff); // reset int register
-        //start reading received data
-        uint8_t len = read(RH_RF95_REG_13_RX_NB_BYTES);
-        uint8_t _buf[len];
-
-        write(RH_RF95_REG_0D_FIFO_ADDR_PTR, read(RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)); // set some pointers
-        burstread(RH_RF95_REG_00_FIFO, _buf, len);
-
-        char* msg = (char*)_buf;
-        printf("recieved: %s\n",msg);
-
-
-        _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) / 4;// quality of packet  signal to noise ratio
-	    _lastRssi = read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
         return RX_DONE;
     }
 
@@ -261,8 +248,12 @@ bool RFM95::setModeIdle(){
     return true;
 }
 
+void RFM95::clearInt(){
+    write(RH_RF95_REG_12_IRQ_FLAGS,0xff);
+}
+
 // the cool funtions
-bool RFM95::transmit(uint8_t* data, int len){
+bool RFM95::transmit(uint8_t* data, uint8_t len){
 
     //printf("transmitting\n");
 
@@ -297,10 +288,25 @@ bool RFM95::transmit(uint8_t* data, int len){
     return true;
 }
 
-bool RFM95::receive(uint8_t* data, int* len){
-    printf("receiver signalled incoming data\n");
-
+bool RFM95::receive(uint8_t *buf, uint8_t *len){
+    //printf("receiver signalled incoming data\n");
+    //flags = flags | 0x02; //set internal flag to reception for further data handling
+    
+    memcpy(buf, _buf, *len);
+    
     return true;
+}
+
+void RFM95::readRxData(){
+
+    uint8_t len = read(RH_RF95_REG_13_RX_NB_BYTES);
+    //start reading received data
+    write(RH_RF95_REG_0D_FIFO_ADDR_PTR, read(RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)); // set some pointers
+    burstread(RH_RF95_REG_00_FIFO, _buf, len); // read fifo and save to temp buffer
+    _bufLen = len;
+
+    _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) / 4;// quality of packet signal to noise ratio
+	_lastRssi = read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
 }
 
 

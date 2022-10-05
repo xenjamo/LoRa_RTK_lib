@@ -284,29 +284,31 @@ class RFM95
     uint8_t burstread(uint8_t addr, uint8_t* data, uint8_t length);
 
     //the functions you wanna use
-    bool transmit(uint8_t *data, int len);
-    bool receive(uint8_t *data, int *len);
+    bool transmit(uint8_t *data, uint8_t len);
+    bool receive(uint8_t *buf, uint8_t *len);
     uint8_t flags;
     event_ event_handler();
     bool waitForTransmission();
 	mode_ mode;
 	event_ event;
 
-    private:
-    //some private stuff ;)
-	
-	
+    private:    //some private stuff ;)
 	
     SPI *_spi;
     DigitalOut _cs_pin;
     PinName _int_pin;
     Timeout tx_timer;
+    InterruptIn isrLora;
+
     int rxBad;
+    uint8_t _buf[RH_RF95_MAX_PAYLOAD_LEN];
+    uint8_t _bufLen;
     uint8_t _lastSNR;
     uint8_t _lastRssi;
     // Interrupts
-    InterruptIn isrLora;
-    void isr_flagger(); //can only set a flag since Serial functions cannot run in ISR context :(
     
+    void isr_flagger(); //can only set a flag since Serial functions cannot run in ISR context :(
+    void clearInt();
+    void readRxData();
 
 };
