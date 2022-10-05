@@ -73,10 +73,13 @@ bool RFM95::init(){
 }
 
 event_ RFM95::event_handler(){
-    if(flags == 0x40){
-        //printf("Interrupt was successfull\n");
+    //printf("flags = 0x%x\n", flags);
+    if((flags & 0x40) != 0x40){
+        //printf("0x%x\n",(flags & !0x40));
+        return NO_EVENT;
     }
-    flags = flags & !0x40; // clear flags --> correct flag gets set in this function
+    flags = flags & !0x80; // clear flags --> correct flag gets set in this function
+    //printf("Interrupt was successfull\n");
 
     uint8_t reg_flags = read(RH_RF95_REG_12_IRQ_FLAGS);
     uint8_t crc_present = read(RH_RF95_REG_1C_HOP_CHANNEL);
@@ -96,62 +99,13 @@ event_ RFM95::event_handler(){
 
     
     if(reg_flags & RH_RF95_TX_DONE){ //////////////////////////////check if INT was a transmission
+        
 		setModeIdle();
         return TX_DONE;
     }
 
     return NO_EVENT;
 }
-
-/* ////////////////////////////////////Future state machine
-event_ RFM95::event_handler(){
-    flags = flags & !0x40; // clear flags --> correct flag gets set in this function
-	
-    uint8_t reg_flags = read(RH_RF95_REG_12_IRQ_FLAGS);
-    //rintf("INT_REG = 0x%x\n", reg_flags);
-    uint8_t crc_present = read(RH_RF95_REG_1C_HOP_CHANNEL);
-
-    if(RH_RF95_RX_DONE & reg_flags){ ///////////////////////////////check if INT was a reception
-
-        printf("received data\n");
-
-        if(reg_flags & (RH_RF95_RX_TIMEOUT | RH_RF95_PAYLOAD_CRC_ERROR)){ //check if payload was bad or not
-            rxBad++;
-            printf("received crap\nBad Rx = %i\n", rxBad);
-            return RX_BAD;
-        }
-        flags = flags | 0x02; //set internal flag to reception for further data handling
-        write(RH_RF95_REG_12_IRQ_FLAGS,0xff);
-        //start reading received data
-        uint8_t len = read(RH_RF95_REG_13_RX_NB_BYTES);
-        uint8_t _buf[len];
-
-        write(RH_RF95_REG_0D_FIFO_ADDR_PTR, read(RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)); // set some pointers
-        burstread(RH_RF95_REG_00_FIFO, _buf, len);
-
-
-
-        _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) / 4;// quality of packet  signal to noise ratio
-	    _lastRssi = read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
-
-        return flags;
-
-    }
-
-    
-    if(reg_flags & RH_RF95_TX_DONE){ //////////////////////////////check if INT was a transmission
-        flags = flags | 0x01; // first bit sets transmission flag
-
-        //printf("sucsessfully transmitted data\n");
-        write(RH_RF95_REG_12_IRQ_FLAGS,0xff); //clear INT registers
-
-        setModeIdle();
-        return flags;
-    }
-
-    return flags;
-}
-*/
 
 bool RFM95::waitForTransmission(){
     int i = 0;
@@ -160,6 +114,7 @@ bool RFM95::waitForTransmission(){
     while(1){
         //printf("int reg content: 0x%x\n",read(RH_RF95_REG_12_IRQ_FLAGS));
 
+        //printf("reg content = 0x%x\n",read(RH_RF95_REG_12_IRQ_FLAGS));
         if(event_handler() == TX_DONE){
             //printf("transmission complete\n");
             return 1;
@@ -168,6 +123,7 @@ bool RFM95::waitForTransmission(){
             t.stop();
             return 0;
         }
+        ThisThread::sleep_for(10ms);
     }
     return 0;
 }
