@@ -22,15 +22,15 @@ bool RFM95::init(){
     // set some parameters to properly use LoRa Module
     // Set operation mode
     write(RH_RF95_REG_01_OP_MODE, RH_RF95_MODE_SLEEP | RH_RF95_LONG_RANGE_MODE);
-    state = SLEEP;
-	event = NO_EVENT;
+    event = NO_EVENT;
+    mode = IDLE;
     rxBad = 0;
     uint8_t data;
     int i = 1;
     while(1){
         data = read(RH_RF95_REG_01_OP_MODE);
         if(data == (RH_RF95_MODE_SLEEP | RH_RF95_LONG_RANGE_MODE)){
-            printf("mode set after %d tries\n", i);
+            //printf("mode set after %d tries\n", i);
             break;
         } else {
             i++;
@@ -73,8 +73,11 @@ bool RFM95::init(){
 }
 
 event_ RFM95::event_handler(){
+    if(flags == 0x40){
+        //printf("Interrupt was successfull\n");
+    }
     flags = flags & !0x40; // clear flags --> correct flag gets set in this function
-	
+
     uint8_t reg_flags = read(RH_RF95_REG_12_IRQ_FLAGS);
 	
     uint8_t crc_present = read(RH_RF95_REG_1C_HOP_CHANNEL);
@@ -82,16 +85,31 @@ event_ RFM95::event_handler(){
     if(RH_RF95_RX_DONE & reg_flags){ ///////////////////////////////check if INT was a reception
 	
         if(reg_flags & (RH_RF95_RX_TIMEOUT | RH_RF95_PAYLOAD_CRC_ERROR)){ //check if payload was bad or not
-		
+            rxBad++;
             return RX_BAD;
         }
-		
+
+		//flags = flags | 0x02; //set internal flag to reception for further data handling
+        write(RH_RF95_REG_12_IRQ_FLAGS,0xff); // reset int register
+        //start reading received data
+        uint8_t len = read(RH_RF95_REG_13_RX_NB_BYTES);
+        uint8_t _buf[len];
+
+        write(RH_RF95_REG_0D_FIFO_ADDR_PTR, read(RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)); // set some pointers
+        burstread(RH_RF95_REG_00_FIFO, _buf, len);
+
+        char* msg = (char*)_buf;
+        printf("recieved: %s\n",msg);
+
+
+        _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) / 4;// quality of packet  signal to noise ratio
+	    _lastRssi = read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
         return RX_DONE;
     }
 
     
     if(reg_flags & RH_RF95_TX_DONE){ //////////////////////////////check if INT was a transmission
-		
+		setModeIdle();
         return TX_DONE;
     }
 
@@ -150,14 +168,20 @@ event_ RFM95::event_handler(){
 
 bool RFM95::waitForTransmission(){
     int i = 0;
+    Timer t;
+    t.start();
     while(1){
-        i++;
-        if(event_handler() == 0x01){
-            printf("transmission complete (i = %d \n)", i);
+        //printf("int reg content: 0x%x\n",read(RH_RF95_REG_12_IRQ_FLAGS));
+
+        if(event_handler() == TX_DONE){
+            //printf("transmission complete\n");
             return 1;
         }
+        if(t.elapsed_time() >= 5s){
+            t.stop();
+            return 0;
+        }
     }
-    printf("i'm impatient (timeout)\n");
     return 0;
 }
 
@@ -180,7 +204,7 @@ bool RFM95::setModeTX(){
         return false;
     }
     */
-    //state = TX_SINGLE;
+    mode = TX_SINGLE;
     
     return true;
 }
@@ -198,7 +222,7 @@ bool RFM95::setModeRX(){
         return false;
     }
     */
-	state = RX_SINGLE;
+	mode = RX_SINGLE;
     return true;
 }
 bool RFM95::setModeContRX(){
@@ -214,7 +238,7 @@ bool RFM95::setModeContRX(){
         return false;
     }
     */
-    state = RX_CONT;
+    mode = RX_CONT;
     return true;
 }
 
@@ -233,26 +257,26 @@ bool RFM95::setModeIdle(){
         return false;
     }
     */
-	state = IDLE;
+	mode = IDLE;
     return true;
 }
 
 // the cool funtions
 bool RFM95::transmit(uint8_t* data, int len){
 
-    printf("transmitting\n");
+    //printf("transmitting\n");
 
     if(len > RH_RF95_MAX_MESSAGE_LEN){
-        printf("message to long idiot\n");
+        printf("message to long, idiot\n");
         return false;
     }
 
     len = uint8_t(len);
 
-    if(_mode != 1){ //check if module is doing anything
+    if(mode != IDLE){ //check if module is doing anything
         return false;
     }
-    setModeIdle(); // make sure module isnt sending or resceiving stuff aka mess up the fifo buffer
+    //setModeIdle(); // make sure module isnt sending or resceiving stuff aka mess up the fifo buffer
 
     
     write(RH_RF95_REG_0D_FIFO_ADDR_PTR, 0);
@@ -267,7 +291,7 @@ bool RFM95::transmit(uint8_t* data, int len){
     //printf("two\n");
 
     write(RH_RF95_REG_22_PAYLOAD_LENGTH, len + RH_RF95_HEADER_LEN);
-    printf("fifo write complete\n");
+    //printf("fifo write complete\n");
     setModeTX(); // Start the transmitter
 
     return true;

@@ -234,6 +234,36 @@
 
 //til here
 
+
+// statemachine stuff
+typedef enum{
+    SLEEP = 0,
+    IDLE,
+    FREQ_SYN_TX,
+    TX_SINGLE,
+    FREQ_SYN_RX,
+    RX_CONT,
+    RX_SINGLE,
+    CAD
+}mode_;
+
+typedef enum{
+	NO_EVENT,
+	//interrupts
+	RX_TIMEOUT,
+	RX_DONE,
+	PAYLOADCRCERROR,
+	VALIDHEADER,
+	TX_DONE,
+	FHSS_CHANGE_CHANNEL,
+	CAD_DETECTED,
+	//custom
+	FIFO_WRITE_COMPLETE,
+	RX_BAD,
+    TX_TIMEOUT
+}event_;
+
+
 // end of registers
 // start of library
 class RFM95
@@ -242,11 +272,7 @@ class RFM95
     RFM95(PinName, PinName, SPI*);
     // init function
     bool init();
-
-    // parameters or something
-    uint8_t _mode;  // 0 = sleep, 1 = standby, 2 = RES, 3 = Transmit, 4 = RES, 5 = ReceiveContinous,
-                    //6 = ReceiveSingle, 7 = Channel Activity Detection
-
+    
     bool setModeTX();
     bool setModeRX();
     bool setModeContRX();
@@ -263,7 +289,7 @@ class RFM95
     uint8_t flags;
     event_ event_handler();
     bool waitForTransmission();
-	state_ state;
+	mode_ mode;
 	event_ event;
 
     private:
