@@ -50,6 +50,11 @@ bool RFM95::init(){
     // RX mode is implmented with RXCONTINUOUS
     // max message data length is 255 - 4 = 251 octets
 
+    //set freq to 868MHz
+    write(RH_RF95_REG_06_FRF_MSB,0xB9);
+    write(RH_RF95_REG_07_FRF_MID,0x00);
+    write(RH_RF95_REG_08_FRF_LSB,0x00);
+
     // set to idle mode
     setModeIdle();
 
@@ -75,11 +80,12 @@ bool RFM95::init(){
 event_ RFM95::event_handler(){
     //printf("flags = 0x%x\n", flags);
     if((flags & 0x40) != 0x40){
-        //printf("0x%x\n",(flags & !0x40));
+        printf("Int reg: 0x%x\n", read(RH_RF95_REG_12_IRQ_FLAGS));
+        printf("Mode reg: 0x%x\n", read(RH_RF95_REG_01_OP_MODE));
         return NO_EVENT;
     }
     flags = flags & !0x80; // clear flags --> correct flag gets set in this function
-    //printf("Interrupt was successfull\n");
+    printf("Interrupt was successfull\n");
 
     uint8_t reg_flags = read(RH_RF95_REG_12_IRQ_FLAGS);
     uint8_t crc_present = read(RH_RF95_REG_1C_HOP_CHANNEL);
