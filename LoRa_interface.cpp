@@ -80,11 +80,11 @@ bool RFM95::init(){
 event_ RFM95::event_handler(){
     //printf("flags = 0x%x\n", flags);
     if((flags & 0x40) != 0x40){
-        printf("Int reg: 0x%x\n", read(RH_RF95_REG_12_IRQ_FLAGS));
-        printf("Mode reg: 0x%x\n", read(RH_RF95_REG_01_OP_MODE));
+        //printf("Int reg: 0x%x\n", read(RH_RF95_REG_12_IRQ_FLAGS));
+        //printf("Mode reg: 0x%x\n", read(RH_RF95_REG_01_OP_MODE));
         return NO_EVENT;
     }
-    flags = flags & !0x80; // clear flags --> correct flag gets set in this function
+    flags = flags & 0x80; // clear flags --> correct flag gets set in this function
     printf("Interrupt was successfull\n");
 
     uint8_t reg_flags = read(RH_RF95_REG_12_IRQ_FLAGS);
@@ -250,11 +250,14 @@ bool RFM95::transmit(uint8_t* data, uint8_t len){
     return true;
 }
 
-bool RFM95::receive(uint8_t *buf, uint8_t *len){
+bool RFM95::receive(uint8_t *buf, uint8_t &len){
+    if (_rx_valid == false) return 0; //
     //printf("receiver signalled incoming data\n");
     //flags = flags | 0x02; //set internal flag to reception for further data handling
-    
-    memcpy(buf, _buf, *len);
+    len = _bufLen;
+
+    memcpy(buf, _buf+4, len-4);
+    _rx_valid = false;
     
     return true;
 }
@@ -266,9 +269,13 @@ void RFM95::readRxData(){
     write(RH_RF95_REG_0D_FIFO_ADDR_PTR, read(RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)); // set some pointers
     burstread(RH_RF95_REG_00_FIFO, _buf, len); // read fifo and save to temp buffer
     _bufLen = len;
+    _rx_valid = true;
+    
+    printf("\n");
 
     _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) / 4;// quality of packet signal to noise ratio
 	_lastRssi = read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
+    //printf("RSSI: 0x%x\tSNR: 0x%x",_LastRssi,LastSNR);
 }
 
 

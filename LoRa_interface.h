@@ -285,7 +285,7 @@ class RFM95
 
     //the functions you wanna use
     bool transmit(uint8_t *data, uint8_t len);
-    bool receive(uint8_t *buf, uint8_t *len);
+    bool receive(uint8_t *buf, uint8_t &len);
     uint8_t flags;
     event_ event_handler();
     bool waitForTransmission();
@@ -305,6 +305,7 @@ class RFM95
     uint8_t _bufLen;
     uint8_t _lastSNR;
     uint8_t _lastRssi;
+    bool _rx_valid;
     // Interrupts
     
     void isr_flagger(); //can only set a flag since Serial functions cannot run in ISR context :(
