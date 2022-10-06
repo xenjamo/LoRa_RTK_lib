@@ -91,6 +91,8 @@ event_ RFM95::event_handler(){
     uint8_t reg_flags = read(RH_RF95_REG_12_IRQ_FLAGS);
     uint8_t crc_present = read(RH_RF95_REG_1C_HOP_CHANNEL);
     clearInt(); // reset interrupt register on lora module
+    clearInt();
+    clearInt();
 
     if(RH_RF95_RX_DONE & reg_flags){ ///////////////////////////////check if INT was a reception
 	    
@@ -144,10 +146,11 @@ void RFM95::isr_flagger(){
 
 bool RFM95::setModeTX(){
     uint8_t reg = read(RH_RF95_REG_01_OP_MODE); // read current register
-    reg = reg & 0xF7; //mask out stuff to keep
+    reg = reg & 0xF8; //mask out stuff to keep
 
-    write(RH_RF95_REG_01_OP_MODE,RH_RF95_MODE_TX | reg); //write mode
     write(RH_RF95_REG_40_DIO_MAPPING1,0x40); //set INT mapping so we can get an TxDone Interupt
+    write(RH_RF95_REG_01_OP_MODE,RH_RF95_MODE_TX | reg); //write mode
+    
 
     /*check if mode is correct
     if(read(RH_RF95_REG_01_OP_MODE) != (RH_RF95_MODE_TX | reg)){
@@ -162,7 +165,7 @@ bool RFM95::setModeTX(){
 
 bool RFM95::setModeRX(){
     uint8_t reg = read(RH_RF95_REG_01_OP_MODE); // read current register
-    reg = reg & 0xF7; //mask out stuff to keep
+    reg = reg & 0xF8; //mask out stuff to keep
 
     write(RH_RF95_REG_01_OP_MODE,RH_RF95_MODE_RXSINGLE | reg); //set mode
     write(RH_RF95_REG_40_DIO_MAPPING1,0x00); //set correct INT mapping so we can get RxDone Interrupt
@@ -178,7 +181,7 @@ bool RFM95::setModeRX(){
 }
 bool RFM95::setModeContRX(){
     uint8_t reg = read(RH_RF95_REG_01_OP_MODE); // read current register
-    reg = reg & 0xF7; //mask out stuff to keep
+    reg = reg & 0xF8; //mask out stuff to keep
 
     write(RH_RF95_REG_01_OP_MODE,RH_RF95_MODE_RXCONTINUOUS | reg);
     write(RH_RF95_REG_40_DIO_MAPPING1,0x00); //set correct INT mapping so we can get RxDone Interrupt
@@ -195,7 +198,7 @@ bool RFM95::setModeContRX(){
 
 bool RFM95::setModeIdle(){
     uint8_t reg = read(RH_RF95_REG_01_OP_MODE); // read current register
-    reg = reg & 0xF7; //mask out stuff to keep
+    reg = reg & 0xF8; //mask out stuff to keep
 
     write(RH_RF95_REG_01_OP_MODE, RH_RF95_MODE_STDBY | reg);
     write(RH_RF95_REG_40_DIO_MAPPING1,0x00); //set correct INT mapping so we can get RxDone Innterrupt
@@ -274,7 +277,6 @@ void RFM95::readRxData(){
     _bufLen = len;
     _rx_valid = true;
     
-    printf("\n");
 
     _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) / 4;// quality of packet signal to noise ratio
 	_lastRssi = read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
