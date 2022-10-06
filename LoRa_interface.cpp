@@ -4,6 +4,7 @@
 * Betreuer: Ruprecht Altenburger
 */
 #include "LoRa_interface.h"
+#include <chrono>
 //SPI spi(MOSI_PIN, MISO_PIN, SCLK_PIN);
 
 RFM95::RFM95(PinName chip_select_pin, PinName int_pin, SPI *LR_spi) :
@@ -85,7 +86,7 @@ event_ RFM95::event_handler(){
         return NO_EVENT;
     }
     flags = flags & 0x80; // clear flags --> correct flag gets set in this function
-    printf("Interrupt was successfull\n");
+    //printf("Interrupt was successfull\n");
 
     uint8_t reg_flags = read(RH_RF95_REG_12_IRQ_FLAGS);
     uint8_t crc_present = read(RH_RF95_REG_1C_HOP_CHANNEL);
@@ -105,8 +106,7 @@ event_ RFM95::event_handler(){
 
     
     if(reg_flags & RH_RF95_TX_DONE){ //////////////////////////////check if INT was a transmission
-        
-		setModeIdle();
+        setModeIdle();
         return TX_DONE;
     }
 
@@ -123,6 +123,8 @@ bool RFM95::waitForTransmission(){
         //printf("reg content = 0x%x\n",read(RH_RF95_REG_12_IRQ_FLAGS));
         if(event_handler() == TX_DONE){
             //printf("transmission complete\n");
+            //t.stop();
+            //printf("The time taken was %llu milliseconds\n", duration_cast<chrono::milliseconds>(t.elapsed_time()).count());
             return 1;
         }
         if(t.elapsed_time() >= 5s){
@@ -227,6 +229,7 @@ bool RFM95::transmit(uint8_t* data, uint8_t len){
     len = uint8_t(len);
 
     if(mode != IDLE){ //check if module is doing anything
+        //printf("mode not idle\n");
         return false;
     }
     //setModeIdle(); // make sure module isnt sending or resceiving stuff aka mess up the fifo buffer
