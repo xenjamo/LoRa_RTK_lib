@@ -56,6 +56,10 @@ bool RFM95::init(){
     write(RH_RF95_REG_07_FRF_MID,0x00);
     write(RH_RF95_REG_08_FRF_LSB,0x00);
 
+    //maximum power;
+    write(RH_RF95_REG_09_PA_CONFIG, 0xdf); // B 1 100 1111 // see page 103
+
+
     // set to idle mode
     setModeIdle();
 
