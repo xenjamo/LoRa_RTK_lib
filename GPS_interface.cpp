@@ -37,7 +37,7 @@ bool RTCM3_UBLOX::RTCM_MSG::write2array(uint8_t *buf, uint8_t *len){
     return 0;
 }
 bool RTCM3_UBLOX::RTCM_MSG::clearMsg(){
-    
+
     preamble = 0;
     msg_length = 0;
     current_msg_pos = 0;
@@ -55,6 +55,7 @@ bool RTCM3_UBLOX::init_(){
     current_msg = 0;
     msg_pos = PREAMBLE; // make int ready to recieve stuff
     c = 0; //clear buffer
+    return 0;
 }
 
 
