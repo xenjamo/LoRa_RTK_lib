@@ -45,16 +45,21 @@ class RTCM3_UBLOX{
 
     bool init();
     uint8_t current_msg;
+    uint8_t *rtcm_msg;
+    uint16_t rtcm_msg_pointer;
+    uint16_t rtcm_msg_length;
     msg_pos_t msg_pos;
     UnbufferedSerial *_serial_port;
     RTCM_MSG msg[MAXIMUM_MESSAGES];
     Timer t;
+    DigitalOut led1;
     bool reached_max_msg;
     bool msg_activity();
     uint8_t msg_ready();
     uint16_t getCompleteMsgLength();
     uint8_t readSingleMsg(uint8_t, uint8_t *buf, uint16_t &len);
     uint8_t readCompleteMsg(uint8_t *buf, uint16_t &len);
+    bool decode();
     bool clearAll();
 
     
@@ -62,6 +67,7 @@ class RTCM3_UBLOX{
     //UnbufferedSerial *_serial_port;
     void rx_interrupt_handler();
     char c; // most important char ever lol
+    void clear_buf(uint8_t *buf, int length);
 
 
 

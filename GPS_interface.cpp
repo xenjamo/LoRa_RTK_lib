@@ -14,10 +14,12 @@
 // Create a UnbufferedSerial object with a default baud rate.
 //static UnbufferedSerial serial_port(PA_0, PA_1, 921600);
 
-RTCM3_UBLOX::RTCM3_UBLOX(UnbufferedSerial *uart){
+RTCM3_UBLOX::RTCM3_UBLOX(UnbufferedSerial *uart) : led1(LED1){
 
     _serial_port = uart; //pointer magic
+    rtcm_msg = (uint8_t*) malloc(MAXIMUM_BUFFER_SIZE*MAXIMUM_MESSAGES);
     
+    clear_buf(rtcm_msg, MAXIMUM_BUFFER_SIZE*MAXIMUM_MESSAGES);
 }
 
 
@@ -32,7 +34,7 @@ RTCM_MSG::RTCM_MSG(){
         crc_valid = 0;
         isvalid = 0;
         incoming = 0;
-        data = (uint8_t*)malloc(MAXIMUM_BUFFER_SIZE);
+        //data = (uint8_t*)malloc(MAXIMUM_BUFFER_SIZE);
 }
 
 bool RTCM_MSG::checkCRC(){
@@ -61,7 +63,9 @@ bool RTCM_MSG::write2array(uint8_t *buf, uint16_t &len){
     return 1;
 }
 bool RTCM_MSG::clearMsg(){
-
+    if(preamble){
+        free(data);
+    }
     preamble = 0;
     length = 0;
     current_msg_pos = 0;
@@ -79,7 +83,7 @@ bool RTCM3_UBLOX::init(){
     clearAll(); //reset everythin to make sure all is set to 0
     current_msg = 0;
     reached_max_msg = 0;
-    msg_pos = MSG_PREAMBLE;
+    msg_pos = MSG_IDLE;
     c = 0; //clear buffer
     //_serial_port->format(8,SerialBase::None,1);
     t.start();
@@ -89,12 +93,17 @@ bool RTCM3_UBLOX::init(){
     return 1;
 }
 
-bool RTCM3_UBLOX::msg_activity(){
 
-    if(t.elapsed_time() > 10us){
+//returns 0 when no activity 1 when data is arriving (theoreticly)
+bool RTCM3_UBLOX::msg_activity(){
+    //led1 = !led1;
+
+    if(t.elapsed_time() > 20us){
+        led1 = 0;
         return 0;
     }
-
+    //printf("n\n");
+    led1 = 1;
     return 1;
 }
 
@@ -127,6 +136,10 @@ uint16_t RTCM3_UBLOX::getCompleteMsgLength(){
             break;
         }
     }
+    if(sum != rtcm_msg_length){
+        printf("calc are wrong\n sum = %d", sum);
+        return 0;
+    }
     
     return sum;
 }
@@ -152,16 +165,41 @@ uint8_t RTCM3_UBLOX::readSingleMsg(uint8_t n, uint8_t *buf, uint16_t &len){
 }
 
 uint8_t RTCM3_UBLOX::readCompleteMsg(uint8_t *buf, uint16_t &len){
-    uint8_t n = msg_ready();
-    uint16_t length_ = 0;
-    len = 0;
 
-    for(int i = 0; i < n; i++){
-        msg[i].write2array(buf+len, length_);
-        len += length_;
+    uint16_t length_ = 0;
+    uint8_t n = 0;
+    //ThisThread::sleep_for(50ms);
+    bool a = msg_activity();
+    bool b = (msg_pos == MSG_DATA);
+
+    if(msg_pos == MSG_DATA ){
+
+        while(msg_activity());
+        //printf("artifical bwebrltwebrtlwjhebrtkjwehbrtkwehjrtbwerjkthbwerjthb delay\n");
+        if(!decode()){
+            //printf("decoder failed\n");
+            clearAll();
+            return 0;
+        }
+
+        n = msg_ready();
+        //printf("n = %d\n",n);
+
+        length_ = getCompleteMsgLength();
+        
+        //printf("0x%x l=%d 0x%x\n", msg[0].preamble, msg[0].length, msg[0].crc);
+        for(int i = 0; i < length_; i++){
+            buf[i] = rtcm_msg[i];
+        }
+        len = length_;
+
+        
+        clearAll();
+        //printf("a = %d , b = %d\n", a,b);
+        
     }
-    clearAll();
-    return 1;
+    return n;
+    
 }
 
 
@@ -170,106 +208,77 @@ bool RTCM3_UBLOX::clearAll(){
     for(int i = 0; i < MAXIMUM_MESSAGES; i++){
         msg[i].clearMsg();
     }
+    clear_buf(rtcm_msg, MAXIMUM_BUFFER_SIZE*MAXIMUM_MESSAGES);
     current_msg = 0;
     reached_max_msg = 0;
+    rtcm_msg_pointer = 0;
+    rtcm_msg_length = 0;
+    msg_pos = MSG_IDLE;
     return 1;
 }
 
+bool RTCM3_UBLOX::decode(){
+    bool loop = true;
 
+    int p_offset = 0; //pointer of the "read array"
+    int n = 0; //index to corrent message number
+    while(loop){
+        msg[n].preamble = rtcm_msg[p_offset+0];
+        //printf("n = %d\n",n);
+        if(msg[n].preamble != 0xd3){
+            printf("preamble wrong\n");
+            return 0;
+        }
+        msg[n].length = ((uint16_t)rtcm_msg[p_offset + 1] << 8) + rtcm_msg[p_offset + 2];
+        msg[n].data = (uint8_t*)malloc(msg[n].length);
+        for(int i = 0; i < msg[n].length; i++){
+            msg[n].data[i] = rtcm_msg[p_offset + 2 + i];
+        }
+        msg[n].crc = ((uint32_t)rtcm_msg[p_offset + 2 + msg[n].length + 1] << 16)
+                    +((uint32_t)rtcm_msg[p_offset + 2 + msg[n].length + 2] <<  8)
+                    +((uint32_t)rtcm_msg[p_offset + 2 + msg[n].length + 3]);
+        
+        if(rtcm_msg[p_offset + 3 + msg[n].length + 3] == 0xd3){
+            p_offset = p_offset + 3 + msg[n].length + 3;
+            msg[n].isvalid = true;
+            //msg[n].checkCRC() //for future implementation
+            n++;
+        } else {
+            loop = 0;
+            p_offset = p_offset + 3 + msg[n].length + 3;
+            rtcm_msg_length = p_offset;
+            msg[n].isvalid = true;
+            //printf("total bytes: %d/%d\n", p_offset, rtcm_msg_pointer);
+
+        }
+
+    }
+    return 1;
+}
 
 
 // private
 void RTCM3_UBLOX::rx_interrupt_handler()
 {
-    
-    static uint8_t i = 0;
-    i = current_msg;
-    
-    _serial_port->read(&c,1);
-    
     t.reset();
+    _serial_port->read(&c,1);
+    rtcm_msg[rtcm_msg_pointer] = c;
+    rtcm_msg_pointer++;
+    msg_pos = MSG_DATA;
+
 
     if(reached_max_msg == true){
         msg_pos = MSG_ERR;
     }
     
-
-    switch (msg_pos){
-        case(MSG_PREAMBLE):
-            if(c == 0xd3){
-                //preamble detected
-                msg[i].incoming = true;
-                msg_pos = MSG_LENGTH;
-                msg[i].preamble = c;
-                msg[i].current_msg_pos = 1;
-            }
-        break;
-        case(MSG_LENGTH):
-            //read msg length
-            msg[i].length = msg[i].length | (((uint16_t)c) << 8*msg[i].current_msg_pos);
-
-            if(msg[i].current_msg_pos == 0){
-                //LSB
-                if(msg[i].length > 1050){
-                    msg_pos = MSG_ERR;
-                }else{
-                    msg_pos = MSG_DATA;
-                }
-
-
-            } else {
-                msg[i].current_msg_pos--;
-            }
-
-        break;
-        case(MSG_DATA):
-            //read data
-            msg[i].data[msg[i].current_msg_pos] = c;
-            msg[i].current_msg_pos++;
-            
-            if(msg[i].current_msg_pos >= msg[i].length){
-                msg[i].current_msg_pos = 2;
-                msg_pos = MSG_CRC;
-            }
-
-        break;
-        case(MSG_CRC):
-            //read crc
-            msg[i].crc = msg[i].crc | (((uint32_t)c) << 8*msg[i].current_msg_pos);
-
-            if(msg[i].current_msg_pos == 0){
-                //LSB
-                msg_pos = MSG_PREAMBLE;
-                msg[i].incoming = false;
-                msg[i].isvalid = true;
-                
-                if(current_msg+1 >= MAXIMUM_MESSAGES){
-                    reached_max_msg = true;
-                    msg_pos = MSG_PREAMBLE;
-
-                }else{
-                    current_msg++;
-                }
-
-                
-
-            } else {
-                msg[i].current_msg_pos--;
-            }
-
-        break;
-        default:
-            // nothing
-        break;
-    }
-
+    return;
 
 }
 
 
 
 
-void clear_buf(uint8_t *buf, int length){
+void RTCM3_UBLOX::clear_buf(uint8_t *buf, int length){
     for(int i = 0; i<length; i++){
         buf[i] = 0;
     }
