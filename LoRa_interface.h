@@ -285,7 +285,6 @@ class RFM95
 
     //the functions you wanna use
     bool transmit(uint8_t *data, uint16_t len);
-    bool transmit_multi(uint8_t* data, uint8_t len);
     bool receive(uint8_t *buf, uint8_t &len);
     uint8_t flags; //
     uint8_t n_payloads;

@@ -291,46 +291,6 @@ bool RFM95::transmit(uint8_t* data, uint16_t len){
     return true;
 }
 
-bool RFM95::transmit_multi(uint8_t* data, uint8_t len){
-    n_payloads = len / RH_RF95_MAX_MESSAGE_LEN;
-    uint8_t rest = len % RH_RF95_MAX_MESSAGE_LEN;
-    int i = 0;
-    uint8_t rx[RH_RF95_MAX_MESSAGE_LEN];
-    uint8_t rx_len;
-    uint8_t k = 0; //number of tires
-    Timer t;
-
-    while(n_payloads){
-
-        if(!transmit(data + i*RH_RF95_MAX_MESSAGE_LEN, RH_RF95_MAX_MESSAGE_LEN)) return 0;
-        
-        if(!waitForTransmission()) return 0;
-        setModeContRX();
-        t.start();
-        while(!(event_handler() == RX_DONE)){
-            if(t.elapsed_time() >= 500ms) return 0;
-        }
-        setModeIdle();
-        receive(rx, len);
-        if(rx[0] == 'a'){
-            printf("Tx %d good\n", i);
-            k = 0;
-            i++;
-            n_payloads--;
-        } else {
-            k++;
-            printf("recieved som rubbish %d\n", k);
-            if(k > 5){
-                printf("transmit_multi() failed\n");
-            }
-        }
-        
-    }
-    if(!transmit(data + i*RH_RF95_MAX_MESSAGE_LEN, rest)) return 0;
-
-    return 1;
-}
-
 bool RFM95::receive(uint8_t *buf, uint8_t &len){
     if (_rx_valid == false) return 0; //
     //printf("receiver signalled incoming data\n");
