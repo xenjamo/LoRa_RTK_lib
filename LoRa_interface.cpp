@@ -26,6 +26,8 @@ bool RFM95::init(){
     event = NO_EVENT;
     mode = IDLE;
     rxBad = 0;
+    n_payloads = 0;
+    n_payloads_sent = 0;
     uint8_t data;
     int i = 1;
     while(1){
@@ -112,6 +114,7 @@ event_ RFM95::event_handler(){
 
     
     if(reg_flags & RH_RF95_TX_DONE){ //////////////////////////////check if INT was a transmission
+        
         setModeIdle();
         return TX_DONE;
     }
@@ -129,7 +132,7 @@ bool RFM95::waitForTransmission(){
         //printf("reg content = 0x%x\n",read(RH_RF95_REG_12_IRQ_FLAGS));
         if(event_handler() == TX_DONE){
             //printf("transmission complete\n");
-            //t.stop();
+            t.stop();
             //printf("The time taken was %llu milliseconds\n", duration_cast<chrono::milliseconds>(t.elapsed_time()).count());
             return 1;
         }
@@ -137,9 +140,13 @@ bool RFM95::waitForTransmission(){
             t.stop();
             return 0;
         }
-        ThisThread::sleep_for(10ms);
+        //ThisThread::sleep_for(10ms);
     }
     return 0;
+}
+
+uint8_t RFM95::get_n_payloads(uint16_t len){
+    return (uint8_t)(len/RH_RF95_MAX_MESSAGE_LEN);
 }
 
 void RFM95::isr_flagger(){
@@ -224,21 +231,33 @@ void RFM95::clearInt(){
 }
 
 // the cool funtions
-bool RFM95::transmit(uint8_t* data, uint8_t len){
-
-    //printf("transmitting\n");
-
-    if(len > RH_RF95_MAX_MESSAGE_LEN){
-        printf("message to long, idiot\n");
-        return false;
-    }
-
-    len = uint8_t(len);
+bool RFM95::transmit(uint8_t* data, uint16_t len){
 
     if(mode != IDLE){ //check if module is doing anything
         //printf("mode not idle\n");
         return false;
     }
+    /*
+    static uint8_t i = 0;
+    if(i == 0){
+        n_payloads = len / RH_RF95_MAX_MESSAGE_LEN;
+    } else {
+        n_payloads--;
+    }
+
+    if(n_payloads){
+        len = RH_RF95_MAX_MESSAGE_LEN;
+    } else{
+        len = len % RH_RF95_MAX_MESSAGE_LEN;
+    }
+    */
+    if(len > RH_RF95_MAX_MESSAGE_LEN){
+        printf("message to long\n");
+        return false;
+    }
+
+    len = uint8_t(len);
+
     //setModeIdle(); // make sure module isnt sending or resceiving stuff aka mess up the fifo buffer
 
     
@@ -248,16 +267,68 @@ bool RFM95::transmit(uint8_t* data, uint8_t len){
     write(RH_RF95_REG_00_FIFO, 0xdc);   //from
     write(RH_RF95_REG_00_FIFO, 0x01);   //id
     write(RH_RF95_REG_00_FIFO, flags);  //Flags
+    write(RH_RF95_REG_00_FIFO, n_payloads); //number of payloads
+
     // The message data
     //printf("one\n");
+    
     burstwrite(RH_RF95_REG_00_FIFO, data, len);
+    //burstwrite(RH_RF95_REG_00_FIFO, data + i*RH_RF95_MAX_MESSAGE_LEN, len);
     //printf("two\n");
 
     write(RH_RF95_REG_22_PAYLOAD_LENGTH, len + RH_RF95_HEADER_LEN);
     //printf("fifo write complete\n");
     setModeTX(); // Start the transmitter
 
+    /*
+    if(n_payloads){
+        i++;
+    }else{
+        i = 0;
+    }
+    */
+
     return true;
+}
+
+bool RFM95::transmit_multi(uint8_t* data, uint8_t len){
+    n_payloads = len / RH_RF95_MAX_MESSAGE_LEN;
+    uint8_t rest = len % RH_RF95_MAX_MESSAGE_LEN;
+    int i = 0;
+    uint8_t rx[RH_RF95_MAX_MESSAGE_LEN];
+    uint8_t rx_len;
+    uint8_t k = 0; //number of tires
+    Timer t;
+
+    while(n_payloads){
+
+        if(!transmit(data + i*RH_RF95_MAX_MESSAGE_LEN, RH_RF95_MAX_MESSAGE_LEN)) return 0;
+        
+        if(!waitForTransmission()) return 0;
+        setModeContRX();
+        t.start();
+        while(!(event_handler() == RX_DONE)){
+            if(t.elapsed_time() >= 500ms) return 0;
+        }
+        setModeIdle();
+        receive(rx, len);
+        if(rx[0] == 'a'){
+            printf("Tx %d good\n", i);
+            k = 0;
+            i++;
+            n_payloads--;
+        } else {
+            k++;
+            printf("recieved som rubbish %d\n", k);
+            if(k > 5){
+                printf("transmit_multi() failed\n");
+            }
+        }
+        
+    }
+    if(!transmit(data + i*RH_RF95_MAX_MESSAGE_LEN, rest)) return 0;
+
+    return 1;
 }
 
 bool RFM95::receive(uint8_t *buf, uint8_t &len){
@@ -266,7 +337,7 @@ bool RFM95::receive(uint8_t *buf, uint8_t &len){
     //flags = flags | 0x02; //set internal flag to reception for further data handling
     len = _bufLen;
 
-    memcpy(buf, _buf+4, len-4);
+    memcpy(buf, _buf, len);
     _rx_valid = false;
     
     return true;

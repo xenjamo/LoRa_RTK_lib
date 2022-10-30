@@ -260,6 +260,11 @@ bool RTCM3_UBLOX::decode(){
 // private
 void RTCM3_UBLOX::rx_interrupt_handler()
 {
+    
+    if(msg_pos == MSG_ERR){
+        return;
+    }
+    
     t.reset();
     _serial_port->read(&c,1);
     rtcm_msg[rtcm_msg_pointer] = c;
@@ -267,7 +272,8 @@ void RTCM3_UBLOX::rx_interrupt_handler()
     msg_pos = MSG_DATA;
 
 
-    if(reached_max_msg == true){
+
+    if(rtcm_msg_pointer > MAXIMUM_BUFFER_SIZE*MAXIMUM_MESSAGES){
         msg_pos = MSG_ERR;
     }
     

@@ -18,7 +18,7 @@
 
 // The length of the headers we add.
 // The headers are inside the LORA's payload
-#define RH_RF95_HEADER_LEN 4
+#define RH_RF95_HEADER_LEN 5
 
 // This is the maximum message length that can be supported by this driver. 
 // Can be pre-defined to a smaller size (to save SRAM) prior to including this header
@@ -284,11 +284,16 @@ class RFM95
     uint8_t burstread(uint8_t addr, uint8_t* data, uint8_t length);
 
     //the functions you wanna use
-    bool transmit(uint8_t *data, uint8_t len);
+    bool transmit(uint8_t *data, uint16_t len);
+    bool transmit_multi(uint8_t* data, uint8_t len);
     bool receive(uint8_t *buf, uint8_t &len);
-    uint8_t flags;
+    uint8_t flags; //
+    uint8_t n_payloads;
+    uint8_t n_payloads_sent;
+    uint8_t n_tries; //number of atemped transmits
     event_ event_handler();
     bool waitForTransmission();
+    uint8_t get_n_payloads(uint16_t len);
 	mode_ mode;
 	event_ event;
 
@@ -299,13 +304,14 @@ class RFM95
     PinName _int_pin;
     Timeout tx_timer;
     InterruptIn isrLora;
-
+    
     int rxBad;
     uint8_t _buf[RH_RF95_MAX_PAYLOAD_LEN];
     uint8_t _bufLen;
     uint8_t _lastSNR;
     uint8_t _lastRssi;
     bool _rx_valid;
+    
     // Interrupts
     
     void isr_flagger(); //can only set a flag since Serial functions cannot run in ISR context :(
