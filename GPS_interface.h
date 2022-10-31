@@ -48,6 +48,7 @@ class RTCM3_UBLOX{
     uint8_t *rtcm_msg;
     uint16_t rtcm_msg_pointer;
     uint16_t rtcm_msg_length;
+    bool isactive;
     msg_pos_t msg_pos;
     UnbufferedSerial *_serial_port;
     RTCM_MSG msg[MAXIMUM_MESSAGES];

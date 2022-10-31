@@ -84,6 +84,7 @@ bool RTCM3_UBLOX::init(){
     current_msg = 0;
     reached_max_msg = 0;
     msg_pos = MSG_IDLE;
+    isactive = 0;
     c = 0; //clear buffer
     //_serial_port->format(8,SerialBase::None,1);
     t.start();
@@ -98,12 +99,10 @@ bool RTCM3_UBLOX::init(){
 bool RTCM3_UBLOX::msg_activity(){
     //led1 = !led1;
 
-    if(t.elapsed_time() > 20us){
-        led1 = 0;
+    if(t.elapsed_time() > 10us){
+        isactive = 0;
         return 0;
     }
-    //printf("n\n");
-    led1 = 1;
     return 1;
 }
 
@@ -169,12 +168,9 @@ uint8_t RTCM3_UBLOX::readCompleteMsg(uint8_t *buf, uint16_t &len){
     uint16_t length_ = 0;
     uint8_t n = 0;
     //ThisThread::sleep_for(50ms);
-    bool a = msg_activity();
-    bool b = (msg_pos == MSG_DATA);
-
-    if(msg_pos == MSG_DATA ){
-
-        while(msg_activity());
+    if((msg_pos == MSG_DATA) & !msg_activity()){
+        
+        //while(msg_activity());
         //printf("artifical bwebrltwebrtlwjhebrtkjwehbrtkwehjrtbwerjkthbwerjthb delay\n");
         if(!decode()){
             //printf("decoder failed\n");
@@ -197,6 +193,8 @@ uint8_t RTCM3_UBLOX::readCompleteMsg(uint8_t *buf, uint16_t &len){
         clearAll();
         //printf("a = %d , b = %d\n", a,b);
         
+    } else {
+        return 0;
     }
     return n;
     
@@ -265,8 +263,10 @@ void RTCM3_UBLOX::rx_interrupt_handler()
         return;
     }
     
-    t.reset();
+    
     _serial_port->read(&c,1);
+    t.reset();
+    isactive = 1;
     rtcm_msg[rtcm_msg_pointer] = c;
     rtcm_msg_pointer++;
     msg_pos = MSG_DATA;
