@@ -260,7 +260,6 @@ bool RFM95::transmit(uint8_t* data, uint16_t len){
 
     //setModeIdle(); // make sure module isnt sending or resceiving stuff aka mess up the fifo buffer
 
-    
     write(RH_RF95_REG_0D_FIFO_ADDR_PTR, 0);
     // The headers
     write(RH_RF95_REG_00_FIFO, 0x00);   //to
