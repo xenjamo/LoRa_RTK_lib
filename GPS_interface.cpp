@@ -17,9 +17,9 @@
 RTCM3_UBLOX::RTCM3_UBLOX(UnbufferedSerial *uart) : led1(LED1){
 
     _serial_port = uart; //pointer magic
-    rtcm_msg = (uint8_t*) malloc(MAXIMUM_BUFFER_SIZE*MAXIMUM_MESSAGES);
+    rtcm_msg = (uint8_t*) malloc(MAXIMUM_BUFFER_SIZE*MAXIMUM_MESSAGES); //allocate memory in heap (stacksize to small)
     
-    clear_buf(rtcm_msg, MAXIMUM_BUFFER_SIZE*MAXIMUM_MESSAGES);
+    clear_buf(rtcm_msg, MAXIMUM_BUFFER_SIZE*MAXIMUM_MESSAGES); //set all to 0 else it will cause issues
 }
 
 
@@ -34,9 +34,10 @@ RTCM_MSG::RTCM_MSG(){
         crc_valid = 0;
         isvalid = 0;
         incoming = 0;
-        //data = (uint8_t*)malloc(MAXIMUM_BUFFER_SIZE);
+        data = (uint8_t*)malloc(MAXIMUM_BUFFER_SIZE);
 }
 
+//to implement in the future
 bool RTCM_MSG::checkCRC(){
 
     return 0;
@@ -46,26 +47,28 @@ bool RTCM_MSG::checkCRC(){
 // writes all its contents to an array and clears itself for next msg
 
 bool RTCM_MSG::write2array(uint8_t *buf, uint16_t &len){
-    len = length + 6;
+    //message inforamtions in the first 4 bytes
+    len = length + 6; 
     buf[0] = preamble;
     buf[1] = (uint8_t)(length >> 8);
     buf[2] = (uint8_t) length      ;
 
+    //copy data to the new array // may use memcpy in the future
     for(int i = 0; i < length; i++){
         buf[3+i] = data[i];
     }
+
+    //write CRC to last 3 bytes
     buf[3+length]   = (uint8_t)(crc >> 16);
     buf[3+length+1] = (uint8_t)(crc >>  8);
     buf[3+length+2] = (uint8_t)(crc >>  0);
 
-    clearMsg();
+    clearMsg(); // clear this message (all info is now stored in buf)
 
     return 1;
 }
 bool RTCM_MSG::clearMsg(){
-    if(preamble){
-        free(data);
-    }
+
     preamble = 0;
     length = 0;
     current_msg_pos = 0;
@@ -78,7 +81,7 @@ bool RTCM_MSG::clearMsg(){
 }
 
 //////// end of class block ///////////
-
+//init function to be called after creating object
 bool RTCM3_UBLOX::init(){
     clearAll(); //reset everythin to make sure all is set to 0
     current_msg = 0;
@@ -86,10 +89,10 @@ bool RTCM3_UBLOX::init(){
     msg_pos = MSG_IDLE;
     isactive = 0;
     c = 0; //clear buffer
-    //_serial_port->format(8,SerialBase::None,1);
+    
     t.start();
     _serial_port->attach(callback(this, &RTCM3_UBLOX::rx_interrupt_handler), SerialBase::RxIrq); //start isr
-    while(!msg_activity());
+    while(!msg_activity()); //wait a msg cycle else uC could start reading mid reception and create errors
     clearAll();
     return 1;
 }
@@ -99,7 +102,9 @@ bool RTCM3_UBLOX::init(){
 bool RTCM3_UBLOX::msg_activity(){
     //led1 = !led1;
 
-    if(t.elapsed_time() > 10us){
+    if(t.elapsed_time() > 1000us){
+        //if this triggers message should be recieved
+        //please optimize in the futrue
         isactive = 0;
         return 0;
     }
@@ -125,10 +130,11 @@ uint8_t RTCM3_UBLOX::msg_ready(){
 
 }
 
+// gets message length in bytes
 uint16_t RTCM3_UBLOX::getCompleteMsgLength(){
     int i = 0;
     uint16_t sum = 0;
-    while(msg[i].isvalid){
+    while(msg[i].isvalid){ //check whether msg accualy has valid data
         sum += msg[i].length + 6; // +6 is from the preamble and crc
         i++;
         if(i >= MAXIMUM_MESSAGES){
@@ -255,24 +261,24 @@ bool RTCM3_UBLOX::decode(){
 }
 
 
-// private
+// gets called when a byte is ready
 void RTCM3_UBLOX::rx_interrupt_handler()
 {
     
-    if(msg_pos == MSG_ERR){
+    if(msg_pos == MSG_ERR){ //stops the function to overfill the buffer if its no called regulary
         return;
     }
     
     
-    _serial_port->read(&c,1);
-    t.reset();
-    isactive = 1;
-    rtcm_msg[rtcm_msg_pointer] = c;
-    rtcm_msg_pointer++;
-    msg_pos = MSG_DATA;
+    _serial_port->read(&c,1); //read this byte
+    t.reset();                  //reset timer to indicate a read
+    isactive = 1;               //set to 1 so we know this function has been called
+    rtcm_msg[rtcm_msg_pointer] = c; //sace read message
+    rtcm_msg_pointer++;             //advance pointer
+    msg_pos = MSG_DATA;             //indicate we are receiving data
 
 
-
+    //if pointer gets out of bounds it creates errors so here we set a flag to indicate the buffer is full or faulty
     if(rtcm_msg_pointer > MAXIMUM_BUFFER_SIZE*MAXIMUM_MESSAGES){
         msg_pos = MSG_ERR;
     }
@@ -283,7 +289,7 @@ void RTCM3_UBLOX::rx_interrupt_handler()
 
 
 
-
+//set all values of an array to 0
 void RTCM3_UBLOX::clear_buf(uint8_t *buf, int length){
     for(int i = 0; i<length; i++){
         buf[i] = 0;
