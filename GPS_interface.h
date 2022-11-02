@@ -60,6 +60,7 @@ class RTCM3_UBLOX{
     uint16_t getCompleteMsgLength();
     uint8_t readSingleMsg(uint8_t, uint8_t *buf, uint16_t &len);
     uint8_t readCompleteMsg(uint8_t *buf, uint16_t &len);
+    uint8_t writeCompleteMsg(uint8_t *buf, uint16_t len);
     bool decode();
     bool clearAll();
 

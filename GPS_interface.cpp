@@ -207,6 +207,17 @@ uint8_t RTCM3_UBLOX::readCompleteMsg(uint8_t *buf, uint16_t &len){
 }
 
 
+uint8_t RTCM3_UBLOX::writeCompleteMsg(uint8_t *buf, uint16_t len){
+    for(int i = 0; i < len; i++){
+        c = buf[i];
+        _serial_port->write(&c, 1);
+
+    }
+
+    return 1;
+}
+
+
 
 bool RTCM3_UBLOX::clearAll(){
     for(int i = 0; i < MAXIMUM_MESSAGES; i++){
