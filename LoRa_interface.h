@@ -293,6 +293,8 @@ class RFM95
     event_ event_handler();
     bool waitForTransmission();
     uint8_t get_n_payloads(uint16_t len);
+    int8_t getSNR();
+    int8_t getRSSI();
 	mode_ mode;
 	event_ event;
 
@@ -307,8 +309,8 @@ class RFM95
     int rxBad;
     uint8_t _buf[RH_RF95_MAX_PAYLOAD_LEN];
     uint8_t _bufLen;
-    uint8_t _lastSNR;
-    uint8_t _lastRssi;
+    int8_t _lastSNR;
+    int8_t _lastRssi;
     bool _rx_valid;
     
     // Interrupts

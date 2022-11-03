@@ -149,6 +149,14 @@ uint8_t RFM95::get_n_payloads(uint16_t len){
     return (uint8_t)(len/RH_RF95_MAX_MESSAGE_LEN);
 }
 
+int8_t RFM95::getSNR(){
+    return _lastSNR;
+}
+int8_t RFM95::getRSSI(){
+    return _lastRssi;
+}
+
+
 void RFM95::isr_flagger(){
 
     flags = flags | 0x40; // set flag B0[X]00 0000 to signal isr has been called
@@ -234,7 +242,7 @@ void RFM95::clearInt(){
 bool RFM95::transmit(uint8_t* data, uint16_t len){
 
     if(mode != IDLE){ //check if module is doing anything
-        //printf("mode not idle\n");
+        printf("mode not idle\n");
         return false;
     }
     /*
@@ -312,8 +320,8 @@ void RFM95::readRxData(){
     _rx_valid = true;
     
 
-    _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) / 4;// quality of packet signal to noise ratio
-	_lastRssi = read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
+    _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) /4;// quality of packet signal to noise ratio
+	_lastRssi = -137 + read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
     //printf("RSSI: 0x%x\tSNR: 0x%x",_LastRssi,LastSNR);
 }
 
