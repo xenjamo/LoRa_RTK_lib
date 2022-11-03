@@ -72,6 +72,7 @@ bool RTCM_MSG::clearMsg(){
     preamble = 0;
     length = 0;
     current_msg_pos = 0;
+    type = 0;
     crc = 0;
     crc_valid = 0;
     isvalid = 0;
@@ -249,6 +250,7 @@ bool RTCM3_UBLOX::decode(){
         for(int i = 0; i < msg[n].length; i++){
             msg[n].data[i] = rtcm_msg[p_offset + 2 + i];
         }
+        msg[n].type = (((uint16_t)rtcm_msg[p_offset + 3] << 8) + rtcm_msg[p_offset + 4])  >> 4;
         msg[n].crc = ((uint32_t)rtcm_msg[p_offset + 2 + msg[n].length + 1] << 16)
                     +((uint32_t)rtcm_msg[p_offset + 2 + msg[n].length + 2] <<  8)
                     +((uint32_t)rtcm_msg[p_offset + 2 + msg[n].length + 3]);

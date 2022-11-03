@@ -26,6 +26,7 @@ class RTCM_MSG{
     uint8_t preamble; // in here for completeness sake
     uint16_t length; // length of data
     uint16_t current_msg_pos;
+    uint16_t type;
     uint8_t* data;  //stores data
     uint32_t crc; //accually its 24bits
     bool crc_valid; //not implemented
