@@ -4,8 +4,10 @@
 
 
 
-#define MAXIMUM_BUFFER_SIZE     1+2+1023+3 //preamble + length + maxdata + crc
-#define MAXIMUM_MESSAGES        10           //MUST be the same size as expected messages
+#define MAXIMUM_RTCM_MESSAGE_LENGTH     1+2+1023+3      //preamble + length + maxdata + crc
+#define MAXIMUM_RTCM_MESSAGES           10              //should be the same size as expected messages
+#define MAXIMUM_UBX_MESSAGES            5               //
+#define MAXIMUM_NMEA_MESSAGES
 
 
 
@@ -18,6 +20,13 @@ typedef enum{
     MSG_COMPLETE,
     MSG_ERR
 }msg_pos_t;
+
+typedef enum{
+    TBD,
+    RTCM,
+    UBX,
+    NMEA
+}msg_type_t;
 
 class RTCM_MSG{
 
@@ -33,36 +42,66 @@ class RTCM_MSG{
     bool incoming;
     bool isvalid;
     bool checkCRC(); //not implemented
-    bool write2array(uint8_t *buf, uint16_t &len);
-    bool clearMsg();
+    void encode(uint8_t *buf, uint16_t &len);
+    uint16_t getlength();
+    bool clear();
     private:
     //nothing private yet
+};
+
+class UBX_MSG{
+
+    public:
+    UBX_MSG();
+    uint16_t header;
+    uint8_t _class;
+    uint8_t id;
+    uint8_t length;
+    uint8_t *data;
+    bool isvalid;
+    void encode(uint8_t *buf, uint16_t &len);
+    uint16_t getlength();
+    bool clear();
+    private:
+
 };
 
 class RTCM3_UBLOX{
     public:
     RTCM3_UBLOX(UnbufferedSerial*);
-
-
     bool init();
-    uint8_t current_msg;
+
+    //some variables
     uint8_t *rtcm_msg;
     uint16_t rtcm_msg_pointer;
     uint16_t rtcm_msg_length;
     bool isactive;
+
+    //classes
     msg_pos_t msg_pos;
     UnbufferedSerial *_serial_port;
-    RTCM_MSG msg[MAXIMUM_MESSAGES];
+    RTCM_MSG msg[MAXIMUM_RTCM_MESSAGES];
+    UBX_MSG ubx[MAXIMUM_UBX_MESSAGES];
     Timer t;
     DigitalOut led1;
     bool reached_max_msg;
+
+    //basic functions
     bool msg_activity();
-    uint8_t msg_ready();
-    uint16_t getCompleteMsgLength();
-    uint8_t readSingleMsg(uint8_t, uint8_t *buf, uint16_t &len);
-    uint8_t readCompleteMsg(uint8_t *buf, uint16_t &len);
+    bool data_ready();
+    uint8_t msg_ready(msg_type_t);
+    
     uint8_t writeCompleteMsg(uint8_t *buf, uint16_t len);
+
+    //data handling
+    //decodes the recieved msg from internal buffer
     bool decode();
+    //encodes all RTCM msgs to an array
+    bool encode_RTCM(uint8_t *buf, uint16_t &len);
+    //encodes all UBX msgs to an array
+    bool encode_UBX(uint8_t *buf, uint16_t &len);
+
+    //clears everything (soft hard reset)
     bool clearAll();
 
     
