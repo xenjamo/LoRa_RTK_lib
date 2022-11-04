@@ -96,22 +96,25 @@ UBX_MSG::UBX_MSG(){
 
 }
 void UBX_MSG::encode(uint8_t *buf, uint16_t &len){
-    len = length + 5;
+    len = length + 8;
     buf[0] = header >> 8;
     buf[1] = header;
 
     buf[2] = _class;
     buf[3] = id;
 
+    buf[5] = length >> 8;
     buf[4] = length;
     for(int i = 0; i < length; i++){
-        buf[5+i] = data[i];
+        buf[6+i] = data[i];
     }
+    buf[6+length] = ch_[0];
+    buf[6+length +1] = ch_[1];
     clear();
 }
 
 uint16_t UBX_MSG::getlength(){
-    return length + 5; //not entirely correct some UBX msgs can have diffrent structures please keep that in mind
+    return length + 8; //not entirely correct some UBX msgs can have diffrent structures please keep that in mind
 }
 
 bool UBX_MSG::clear(){
@@ -120,6 +123,8 @@ bool UBX_MSG::clear(){
     id = 0;
     length = 0;
     isvalid = 0;
+    ch_[0] = 0;
+    ch_[1] = 0;
     return 1;
 }
 
@@ -145,7 +150,7 @@ bool RTCM3_UBLOX::init(){
 bool RTCM3_UBLOX::msg_activity(){
     //led1 = !led1;
 
-    if(t.elapsed_time() > 1000us){
+    if(t.elapsed_time() > 5ms){
         //if this triggers message should be recieved
         //please optimize in the future
         isactive = 0;
@@ -198,6 +203,24 @@ uint8_t RTCM3_UBLOX::msg_ready(msg_type_t t){
 
 }
 
+void RTCM3_UBLOX::printMsgTypes(){
+    
+    uint8_t n = msg_ready(RTCM);
+    if(n == 0){
+        printf("no rtcm msg\n");
+        return;
+    }
+
+    printf("Msg types are:");
+
+    for(int i = 0; i < n; i++){
+        printf(" %d,",msg[i].type);
+    }
+    printf("\n");
+    
+}
+
+
 
 uint8_t RTCM3_UBLOX::writeCompleteMsg(uint8_t *buf, uint16_t len){
     for(int i = 0; i < len; i++){
@@ -214,6 +237,9 @@ uint8_t RTCM3_UBLOX::writeCompleteMsg(uint8_t *buf, uint16_t len){
 bool RTCM3_UBLOX::clearAll(){
     for(int i = 0; i < MAXIMUM_RTCM_MESSAGES; i++){
         msg[i].clear();
+    }
+    for(int i = 0; i < MAXIMUM_UBX_MESSAGES; i++){
+        ubx[i].clear();
     }
     clear_buf(rtcm_msg, MAXIMUM_RTCM_MESSAGE_LENGTH*MAXIMUM_RTCM_MESSAGES);
     reached_max_msg = 0;
@@ -261,13 +287,17 @@ bool RTCM3_UBLOX::decode(){
             ubx[k].header = ((uint16_t)rtcm_msg[p_offset+0] << 8) + rtcm_msg[p_offset+1];
             ubx[k]._class = rtcm_msg[p_offset+2];
             ubx[k].id = rtcm_msg[p_offset+3];
-            ubx[k].length = rtcm_msg[p_offset+4];
+            ubx[k].length = ((uint16_t)rtcm_msg[p_offset+5] << 8) + rtcm_msg[p_offset+4];
             ubx[k].data = (uint8_t*)calloc(ubx[k].length, 1);
             for(int i = 0; i < ubx[k].length; i++){
-                ubx[k].data[i] = rtcm_msg[p_offset+5+i];
+                ubx[k].data[i] = rtcm_msg[p_offset+6+i];
             }
-            p_offset = p_offset + 5 + ubx[k].length;
+            
+            ubx[k].ch_[0] = rtcm_msg[p_offset+6+ubx[k].length];
+            ubx[k].ch_[1] = rtcm_msg[p_offset+6+ubx[k].length+1];
+            p_offset = p_offset + 8 + ubx[k].length;
             ubx[k].isvalid = true;
+            k++;
 
 
         }else if(first_byte == '$'){

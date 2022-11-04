@@ -56,9 +56,10 @@ class UBX_MSG{
     uint16_t header;
     uint8_t _class;
     uint8_t id;
-    uint8_t length;
+    uint16_t length;
     uint8_t *data;
     bool isvalid;
+    uint8_t ch_[2];
     void encode(uint8_t *buf, uint16_t &len);
     uint16_t getlength();
     bool clear();
@@ -90,7 +91,8 @@ class RTCM3_UBLOX{
     bool msg_activity();
     bool data_ready();
     uint8_t msg_ready(msg_type_t);
-    
+    void printMsgTypes();
+
     uint8_t writeCompleteMsg(uint8_t *buf, uint16_t len);
 
     //data handling
