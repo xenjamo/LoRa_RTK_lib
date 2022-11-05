@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <string>
 #include "mbed.h"
 
 
@@ -62,6 +63,7 @@ class UBX_MSG{
     uint8_t ch_[2];
     void encode(uint8_t *buf, uint16_t &len);
     uint16_t getlength();
+    string tostring();
     bool clear();
     private:
 
@@ -111,8 +113,9 @@ class RTCM3_UBLOX{
     //UnbufferedSerial *_serial_port;
     void rx_interrupt_handler();
     char c; // most important char ever lol
-    void clear_buf(uint8_t *buf, int length);
+    
 
 
 
 };
+void clear_buf(uint8_t *buf, int length);

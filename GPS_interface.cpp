@@ -71,7 +71,7 @@ uint16_t RTCM_MSG::getlength(){
 }
 
 bool RTCM_MSG::clear(){
-
+    clear_buf(data, length);
     preamble = 0;
     length = 0;
     current_msg_pos = 0;
@@ -118,6 +118,7 @@ uint16_t UBX_MSG::getlength(){
 }
 
 bool UBX_MSG::clear(){
+    clear_buf(data, length);
     header = 0;
     _class = 0;
     id = 0;
@@ -127,8 +128,31 @@ bool UBX_MSG::clear(){
     ch_[1] = 0;
     return 1;
 }
+string UBX_MSG::tostring(){
+    string s;
+    switch(_class){
+        case(0x01):
+        s.append("UBX-NAV");
+        switch(id){
+            case(0x25):
+            s.append("-SVIN;");
 
-////// end of BX msg block//////////
+            break;
+            default:
+            break;
+        }
+
+
+        break;
+        default:
+        printf("class 0x%x not supported\n", _class);
+        return NULL;
+        break;
+    }
+    return s;
+}
+
+////// end of UBX msg block//////////
 
 //init function to be called after creating object
 bool RTCM3_UBLOX::init(){
@@ -150,7 +174,7 @@ bool RTCM3_UBLOX::init(){
 bool RTCM3_UBLOX::msg_activity(){
     //led1 = !led1;
 
-    if(t.elapsed_time() > 5ms){
+    if(t.elapsed_time() > 20ms){
         //if this triggers message should be recieved
         //please optimize in the future
         isactive = 0;
@@ -265,7 +289,9 @@ bool RTCM3_UBLOX::decode(){
         //printf("n = %d\n",n);
         if(first_byte == 0xd3){
             msg[n].clear();
+
             free(msg[n].data);
+
             msg[n].preamble = rtcm_msg[p_offset+0];
             msg[n].length = ((uint16_t)rtcm_msg[p_offset + 1] << 8) + rtcm_msg[p_offset + 2];
             msg[n].data = (uint8_t*)calloc(msg[n].length, 1);
@@ -283,7 +309,9 @@ bool RTCM3_UBLOX::decode(){
 
         }else if(first_byte == 0xb5){
             ubx[k].clear();
+
             free(ubx[k].data);
+
             ubx[k].header = ((uint16_t)rtcm_msg[p_offset+0] << 8) + rtcm_msg[p_offset+1];
             ubx[k]._class = rtcm_msg[p_offset+2];
             ubx[k].id = rtcm_msg[p_offset+3];
@@ -366,6 +394,8 @@ bool RTCM3_UBLOX::encode_UBX(uint8_t *buf, uint16_t &len){
 
 
 
+
+
 // gets called when a byte is ready
 void RTCM3_UBLOX::rx_interrupt_handler()
 {
@@ -378,7 +408,7 @@ void RTCM3_UBLOX::rx_interrupt_handler()
     _serial_port->read(&c,1); //read this byte
     t.reset();                  //reset timer to indicate a read
     isactive = 1;               //set to 1 so we know this function has been called
-    rtcm_msg[rtcm_msg_pointer] = c; //sace read message
+    rtcm_msg[rtcm_msg_pointer] = c; //save read message
     rtcm_msg_pointer++;             //advance pointer
     msg_pos = MSG_DATA;             //indicate we are receiving data
 
@@ -395,7 +425,7 @@ void RTCM3_UBLOX::rx_interrupt_handler()
 
 
 //set all values of an array to 0
-void RTCM3_UBLOX::clear_buf(uint8_t *buf, int length){
+void clear_buf(uint8_t *buf, int length){
     for(int i = 0; i<length; i++){
         buf[i] = 0;
     }
