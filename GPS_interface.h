@@ -1,14 +1,13 @@
 #include <cstdint>
 #include <string>
 #include "mbed.h"
+#include "RTCM3_protocol.h"
+#include "UBX_protocol.h"
 
 
-
-
-#define MAXIMUM_RTCM_MESSAGE_LENGTH     1+2+1023+3      //preamble + length + maxdata + crc
 #define MAXIMUM_RTCM_MESSAGES           10              //should be the same size as expected messages
 #define MAXIMUM_UBX_MESSAGES            5               //
-#define MAXIMUM_NMEA_MESSAGES
+#define MAXIMUM_NMEA_MESSAGES           5               //
 
 
 
@@ -29,49 +28,10 @@ typedef enum{
     NMEA
 }msg_type_t;
 
-class RTCM_MSG{
-
-    public:
-    RTCM_MSG();
-    uint8_t preamble; // in here for completeness sake
-    uint16_t length; // length of data
-    uint16_t current_msg_pos;
-    uint16_t type;
-    uint8_t* data;  //stores data
-    uint32_t crc; //accually its 24bits
-    bool crc_valid; //not implemented
-    bool incoming;
-    bool isvalid;
-    bool checkCRC(); //not implemented
-    void encode(uint8_t *buf, uint16_t &len);
-    uint16_t getlength();
-    bool clear();
-    private:
-    //nothing private yet
-};
-
-class UBX_MSG{
-
-    public:
-    UBX_MSG();
-    uint16_t header;
-    uint8_t _class;
-    uint8_t id;
-    uint16_t length;
-    uint8_t *data;
-    bool isvalid;
-    uint8_t ch_[2];
-    void encode(uint8_t *buf, uint16_t &len);
-    uint16_t getlength();
-    string tostring();
-    bool clear();
-    private:
-
-};
 
 class RTCM3_UBLOX{
     public:
-    RTCM3_UBLOX(UnbufferedSerial*);
+    RTCM3_UBLOX(UnbufferedSerial *uart);
     bool init();
 
     //some variables

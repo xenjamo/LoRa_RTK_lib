@@ -23,136 +23,7 @@ RTCM3_UBLOX::RTCM3_UBLOX(UnbufferedSerial *uart) : led1(LED1){
 }
 
 
-//////// class block ///////////
 
-RTCM_MSG::RTCM_MSG(){
-        preamble = 0;
-        length = 0;
-        current_msg_pos = 0;
-        crc = 0;
-        crc_valid = 0;
-        isvalid = 0;
-        incoming = 0;
-        data = (uint8_t*)malloc(MAXIMUM_RTCM_MESSAGE_LENGTH);
-}
-
-//to implement in the future
-bool RTCM_MSG::checkCRC(){
-
-    return 0;
-}
-
-
-// writes all its contents to an array and clears itself for next msg
-
-void RTCM_MSG::encode(uint8_t *buf, uint16_t &len){
-    //message inforamtions in the first 4 bytes
-    len = length + 6; 
-    buf[0] = preamble;
-    buf[1] = (uint8_t)(length >> 8);
-    buf[2] = (uint8_t) length      ;
-
-    //copy data to the new array // may use memcpy in the future
-    for(int i = 0; i < length; i++){
-        buf[3+i] = data[i];
-    }
-
-    //write CRC to last 3 bytes
-    buf[3+length]   = (uint8_t)(crc >> 16);
-    buf[3+length+1] = (uint8_t)(crc >>  8);
-    buf[3+length+2] = (uint8_t)(crc >>  0);
-
-    clear(); // clear this message (all info is now stored in buf)
-
-}
-
-uint16_t RTCM_MSG::getlength(){
-    return length + 6;
-}
-
-bool RTCM_MSG::clear(){
-    clear_buf(data, length);
-    preamble = 0;
-    length = 0;
-    current_msg_pos = 0;
-    type = 0;
-    crc = 0;
-    crc_valid = 0;
-    isvalid = 0;
-    incoming = 0;
-    return 1;
-}
-
-//////// end of class block ///////////
-//////// other class block //////////
-
-UBX_MSG::UBX_MSG(){
-    header = 0;
-    _class = 0;
-    id = 0;
-    length = 0;
-    isvalid = 0;
-    data = (uint8_t*)calloc(5,1);
-
-}
-void UBX_MSG::encode(uint8_t *buf, uint16_t &len){
-    len = length + 8;
-    buf[0] = header >> 8;
-    buf[1] = header;
-
-    buf[2] = _class;
-    buf[3] = id;
-
-    buf[5] = length >> 8;
-    buf[4] = length;
-    for(int i = 0; i < length; i++){
-        buf[6+i] = data[i];
-    }
-    buf[6+length] = ch_[0];
-    buf[6+length +1] = ch_[1];
-    clear();
-}
-
-uint16_t UBX_MSG::getlength(){
-    return length + 8; //not entirely correct some UBX msgs can have diffrent structures please keep that in mind
-}
-
-bool UBX_MSG::clear(){
-    clear_buf(data, length);
-    header = 0;
-    _class = 0;
-    id = 0;
-    length = 0;
-    isvalid = 0;
-    ch_[0] = 0;
-    ch_[1] = 0;
-    return 1;
-}
-string UBX_MSG::tostring(){
-    string s;
-    switch(_class){
-        case(0x01):
-        s.append("UBX-NAV");
-        switch(id){
-            case(0x25):
-            s.append("-SVIN;");
-
-            break;
-            default:
-            break;
-        }
-
-
-        break;
-        default:
-        printf("class 0x%x not supported\n", _class);
-        return NULL;
-        break;
-    }
-    return s;
-}
-
-////// end of UBX msg block//////////
 
 //init function to be called after creating object
 bool RTCM3_UBLOX::init(){
@@ -185,7 +56,6 @@ bool RTCM3_UBLOX::msg_activity(){
 bool RTCM3_UBLOX::data_ready(){
     return (msg_pos == MSG_DATA) & !msg_activity();
 }
-
 
 
 //indicates if RTCM msg hase been recieved and outputs the number uf messages it has stored
