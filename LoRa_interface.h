@@ -7,7 +7,6 @@
 
 #include <cstdint>
 #include "mbed.h"
-#include "RTK_states_and_events.h"
 
 // Max number of octets the LORA Rx/Tx FIFO can hold
 #define RH_RF95_FIFO_SIZE 255

@@ -97,12 +97,12 @@ uint8_t RTCM3_UBLOX::msg_ready(msg_type_t t){
 
 }
 
-void RTCM3_UBLOX::printMsgTypes(){
+bool RTCM3_UBLOX::printMsgTypes(){
     
     uint8_t n = msg_ready(RTCM);
     if(n == 0){
-        printf("no rtcm msg\n");
-        return;
+        //printf("no rtcm msg\n");
+        return false;
     }
 
     printf("Msg types are:");
@@ -111,6 +111,7 @@ void RTCM3_UBLOX::printMsgTypes(){
         printf(" %d,",msg[i].type);
     }
     printf("\n");
+    return true;
     
 }
 

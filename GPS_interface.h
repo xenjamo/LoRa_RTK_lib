@@ -53,7 +53,7 @@ class RTCM3_UBLOX{
     bool msg_activity();
     bool data_ready();
     uint8_t msg_ready(msg_type_t);
-    void printMsgTypes();
+    bool printMsgTypes();
 
     uint8_t writeCompleteMsg(uint8_t *buf, uint16_t len);
 
