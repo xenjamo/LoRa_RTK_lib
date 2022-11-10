@@ -167,12 +167,12 @@ bool RTCM3_UBLOX::decode(){
             msg[n].length = ((uint16_t)rtcm_msg[p_offset + 1] << 8) + rtcm_msg[p_offset + 2];
             msg[n].data = (uint8_t*)calloc(msg[n].length, 1);
             for(int i = 0; i < msg[n].length; i++){
-                msg[n].data[i] = rtcm_msg[p_offset + 2 + i];
+                msg[n].data[i] = rtcm_msg[p_offset + 3 + i];
             }
             msg[n].type = (((uint16_t)rtcm_msg[p_offset + 3] << 8) + rtcm_msg[p_offset + 4])  >> 4;
-            msg[n].crc = ((uint32_t)rtcm_msg[p_offset + 2 + msg[n].length + 1] << 16)
-                        +((uint32_t)rtcm_msg[p_offset + 2 + msg[n].length + 2] <<  8)
-                        +((uint32_t)rtcm_msg[p_offset + 2 + msg[n].length + 3]);
+            msg[n].crc = ((uint32_t)rtcm_msg[p_offset + 3 + msg[n].length] << 16)
+                        +((uint32_t)rtcm_msg[p_offset + 3 + msg[n].length + 1] <<  8)
+                        +((uint32_t)rtcm_msg[p_offset + 3 + msg[n].length + 2]);
             //
             p_offset = p_offset + 3 + msg[n].length + 3;
             msg[n].isvalid = true;
