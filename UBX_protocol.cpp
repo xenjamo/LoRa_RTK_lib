@@ -1,5 +1,6 @@
 
 #include "UBX_protocol.h"
+#include <cstdint>
 
 //////// other class block //////////
 
@@ -143,6 +144,35 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             utemp32[0] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
             utemp32[1] = (uint32_t)data[24] | ((uint32_t)data[25] << 8) | ((uint32_t)data[26] << 16) | ((uint32_t)data[27] << 24);
             l = sprintf(temp, "hAcc [mm];%d;vAcc [mm];%d;",utemp32[0],utemp32[1])+1;
+            insert2array(buf, temp, l, offset);
+
+            break;
+            case(0x14):
+            l = sprintf(temp, "-HPPOSLLH;")+1;
+            insert2array(buf, temp, l, offset);
+            l = sprintf(temp, "ver;%02x;", data[0])+1;
+            insert2array(buf, temp, l, offset);
+            l = sprintf(temp, "invalidLlh;%d;", data[3] & 0x01)+1;
+            insert2array(buf, temp, l, offset);
+            utemp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[6] << 16) | ((uint32_t)data[ 7] << 24);
+            l = sprintf(temp, "iTOW [ms];%d;",utemp32[0])+1;
+            temp32[0] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24);
+            temp32[1] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
+            tempf[0] = (double)temp32[0] / 10000000;
+            tempf[1] = (double)temp32[1] / 10000000;
+            l = sprintf(temp, "lon [deg];%3.8f;lat [deg];%3.8f;",tempf[0],tempf[1])+1;
+            insert2array(buf, temp, l, offset);
+            temp32[0] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24);
+            utemp32[0] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
+            l = sprintf(temp, "heigth [mm];%d;hMSL [mm];%d;",temp32[0],utemp32[0])+1;
+            insert2array(buf, temp, l, offset);
+            l = sprintf(temp, "lon HP [deg];%1.9f;lat HP [deg];%1.9f;",((double)(int8_t)data[24]) / 1000000000,((double)(int8_t)data[25]) / 1000000000)+1;
+            insert2array(buf, temp, l, offset);
+            l = sprintf(temp, "height HP [0.1 mm];%d;hMSL HP [0.1 mm];%d;",(int8_t)data[26],(int8_t)data[27])+1;
+            insert2array(buf, temp, l, offset);
+            utemp32[0] = (uint32_t)data[28] | ((uint32_t)data[29] << 8) | ((uint32_t)data[30] << 16) | ((uint32_t)data[31] << 24);
+            utemp32[1] = (uint32_t)data[32] | ((uint32_t)data[33] << 8) | ((uint32_t)data[34] << 16) | ((uint32_t)data[35] << 24);
+            l = sprintf(temp, "hAcc [0.1 mm];%d;vAcc [0.1 mm];%d;",utemp32[0],utemp32[1])+1;
             insert2array(buf, temp, l, offset);
 
             break;
