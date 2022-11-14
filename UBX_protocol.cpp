@@ -75,7 +75,7 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[6] << 16) | ((uint32_t)data[7] << 24);
             utemp32[1] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24);
-            l = sprintf(temp, "iTOW [ms];%d;dur;%d;",utemp32[0],utemp32[1])+1;
+            l = sprintf(temp, "iTOW [ms];%u;dur;%u;",utemp32[0],utemp32[1])+1;
             insert2array(buf, temp, l, offset);
             temp32[0] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
             temp32[1] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24);
@@ -85,10 +85,10 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             l = sprintf(temp, "meanX,Y,Z HP [0.1 mm];%d;%d;%d;",(int8_t)data[24],(int8_t)data[25],(int8_t)data[26])+1;
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[28] | ((uint32_t)data[29] << 8) | ((uint32_t)data[30] << 16) | ((uint32_t)data[31] << 24);
-            l = sprintf(temp, "meanAcc HP [0.1 mm];%d;",utemp32[0])+1;
+            l = sprintf(temp, "meanAcc HP [0.1 mm];%u;",utemp32[0])+1;
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[32] | ((uint32_t)data[33] << 8) | ((uint32_t)data[34] << 16) | ((uint32_t)data[35] << 24);
-            l = sprintf(temp, "obs;%d;valid;%d;active;%d;",utemp32[0],data[36],data[37])+1;
+            l = sprintf(temp, "obs;%u;valid;%d;active;%d;",utemp32[0],data[36],data[37])+1;
             insert2array(buf, temp, l, offset);
 
             break;
@@ -96,7 +96,7 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             l = sprintf(temp, "-STATUS;")+1;
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[0] | ((uint32_t)data[1] << 8) | ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
-            l = sprintf(temp, "iTOW [ms];%d;",utemp32[0])+1;
+            l = sprintf(temp, "iTOW [ms];%u;",utemp32[0])+1;
             insert2array(buf, temp, l, offset);
             l = sprintf(temp, "gpsFix;0x%x;",data[4])+1;
             insert2array(buf, temp, l, offset);
@@ -122,7 +122,7 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24);
             utemp32[1] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
-            l = sprintf(temp, "ttff;%d;msss;%d;",utemp32[0],utemp32[1])+1;
+            l = sprintf(temp, "ttff;%u;msss;%u;",utemp32[0],utemp32[1])+1;
             insert2array(buf, temp, l, offset);
 
             break;
@@ -130,12 +130,12 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             l = sprintf(temp, "-POSLLH;")+1;
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[0] | ((uint32_t)data[1] << 8) | ((uint32_t)data[2] << 16) | ((uint32_t)data[ 3] << 24);
-            l = sprintf(temp, "iTOW [ms];%d;",utemp32[0])+1;
+            l = sprintf(temp, "iTOW [ms];%u;",utemp32[0])+1;
             temp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[ 6] << 16) | ((uint32_t)data[ 7] << 24);
             temp32[1] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24);
             tempf[0] = (double)temp32[0] / 10000000;
             tempf[1] = (double)temp32[1] / 10000000;
-            l = sprintf(temp, "lon [deg];%3.8f;lat [deg];%3.8f;",tempf[0],tempf[1])+1;
+            l = sprintf(temp, "lon [deg];%3.7f;lat [deg];%3.7f;",tempf[0],tempf[1])+1;
             insert2array(buf, temp, l, offset);
             temp32[0] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
             utemp32[0] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24);
@@ -143,7 +143,7 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
             utemp32[1] = (uint32_t)data[24] | ((uint32_t)data[25] << 8) | ((uint32_t)data[26] << 16) | ((uint32_t)data[27] << 24);
-            l = sprintf(temp, "hAcc [mm];%d;vAcc [mm];%d;",utemp32[0],utemp32[1])+1;
+            l = sprintf(temp, "hAcc [mm];%u;vAcc [mm];%u;",utemp32[0],utemp32[1])+1;
             insert2array(buf, temp, l, offset);
 
             break;
@@ -160,11 +160,11 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             temp32[1] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
             tempf[0] = (double)temp32[0] / 10000000;
             tempf[1] = (double)temp32[1] / 10000000;
-            l = sprintf(temp, "lon [deg];%3.8f;lat [deg];%3.8f;",tempf[0],tempf[1])+1;
+            l = sprintf(temp, "lon [deg];%3.7f;lat [deg];%3.7f;",tempf[0],tempf[1])+1;
             insert2array(buf, temp, l, offset);
             temp32[0] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24);
             utemp32[0] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
-            l = sprintf(temp, "heigth [mm];%d;hMSL [mm];%d;",temp32[0],utemp32[0])+1;
+            l = sprintf(temp, "heigth [mm];%d;hMSL [mm];%u;",temp32[0],utemp32[0])+1;
             insert2array(buf, temp, l, offset);
             l = sprintf(temp, "lon HP [deg];%1.9f;lat HP [deg];%1.9f;",((double)(int8_t)data[24]) / 1000000000,((double)(int8_t)data[25]) / 1000000000)+1;
             insert2array(buf, temp, l, offset);
@@ -172,7 +172,7 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[28] | ((uint32_t)data[29] << 8) | ((uint32_t)data[30] << 16) | ((uint32_t)data[31] << 24);
             utemp32[1] = (uint32_t)data[32] | ((uint32_t)data[33] << 8) | ((uint32_t)data[34] << 16) | ((uint32_t)data[35] << 24);
-            l = sprintf(temp, "hAcc [0.1 mm];%d;vAcc [0.1 mm];%d;",utemp32[0],utemp32[1])+1;
+            l = sprintf(temp, "hAcc [0.1 mm];%u;vAcc [0.1 mm];%u;",utemp32[0],utemp32[1])+1;
             insert2array(buf, temp, l, offset);
 
             break;
@@ -183,7 +183,7 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             insert2array(buf, temp, l, offset);
             utemp16[0] = (uint16_t)data[2] | ((uint16_t)data[3] << 8);
             utemp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[6] << 16) | ((uint32_t)data[7] << 24);
-            l = sprintf(temp, "revID;%d;iTOW [ms];%d;",utemp16[0],utemp32[0])+1;
+            l = sprintf(temp, "revID;%u;iTOW [ms];%u;",utemp16[0],utemp32[0])+1;
             insert2array(buf, temp, l, offset);
             temp32[0] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24);
             temp32[1] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
@@ -193,7 +193,7 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             utemp32[0] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
             temp32[0] = (uint32_t)data[24] | ((uint32_t)data[25] << 8) | ((uint32_t)data[26] << 16) | ((uint32_t)data[27] << 24);
             tempf[0] = (double)temp32[0] / 100000;
-            l = sprintf(temp, "dist [cm];%d;heading [deg];%3.5f;",utemp32[0],tempf[0])+1;
+            l = sprintf(temp, "dist [cm];%u;heading [deg];%3.5f;",utemp32[0],tempf[0])+1;
             insert2array(buf, temp, l, offset);
             l = sprintf(temp, "relposN,E,D HP [0.1 mm];%d;%d;%d;",(int8_t)data[32],(int8_t)data[33],(int8_t)data[34])+1;
             insert2array(buf, temp, l, offset);
@@ -202,12 +202,12 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             utemp32[0] = (uint32_t)data[36] | ((uint32_t)data[37] << 8) | ((uint32_t)data[38] << 16) | ((uint32_t)data[39] << 24);
             utemp32[1] = (uint32_t)data[40] | ((uint32_t)data[41] << 8) | ((uint32_t)data[42] << 16) | ((uint32_t)data[43] << 24);
             utemp32[2] = (uint32_t)data[44] | ((uint32_t)data[45] << 8) | ((uint32_t)data[46] << 16) | ((uint32_t)data[47] << 24);
-            l = sprintf(temp, "accN,E,D [0.1 mm];%d;%d;%d;",utemp32[0],utemp32[1],utemp32[2])+1;
+            l = sprintf(temp, "accN,E,D [0.1 mm];%u;%u;%u;",utemp32[0],utemp32[1],utemp32[2])+1;
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[48] | ((uint32_t)data[49] << 8) | ((uint32_t)data[50] << 16) | ((uint32_t)data[51] << 24);
             temp32[0] = (uint32_t)data[52] | ((uint32_t)data[53] << 8) | ((uint32_t)data[54] << 16) | ((uint32_t)data[55] << 24);
             tempf[0] = (double)temp32[0] / 100000;
-            l = sprintf(temp, "accDist [0.1 mm];%d;accHead [deg];%f;",utemp32[0],tempf[0])+1;
+            l = sprintf(temp, "accDist [0.1 mm];%u;accHead [deg];%f;",utemp32[0],tempf[0])+1;
             insert2array(buf, temp, l, offset);
             l = sprintf(temp, "gnssFixOk;%d;",(data[60] >> 0) & 0x01)+1;
             insert2array(buf, temp, l, offset);
