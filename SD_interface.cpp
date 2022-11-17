@@ -7,7 +7,7 @@
 
 
 
-SDCARD::SDCARD() : fs(MOUNT_PATH), sd(PC_12, PC_11, PC_10, PD_2){
+SDCARD::SDCARD() : fs(MOUNT_PATH), _sd(PC_12, PC_11, PC_10, PD_2){
     
     //nothing special here
 
@@ -15,13 +15,13 @@ SDCARD::SDCARD() : fs(MOUNT_PATH), sd(PC_12, PC_11, PC_10, PD_2){
 
 
 bool SDCARD::init(){
-    if (0 != sd.init()) {
+    if (0 != _sd.init()) {
         printf("Init failed \n");
         return 0;
     }
     fflush(stdout);
 
-    if(fs.mount(&sd) != 0){
+    if(fs.mount(&_sd) != 0){
         printf("mount failed\n");
         return 0;
     }
@@ -56,6 +56,7 @@ bool SDCARD::write2sd(char *data, int l){
         return 0;
     }
     fprintf(fp, "%s", data);
+    fclose(fp);
 
     return 1;
 }

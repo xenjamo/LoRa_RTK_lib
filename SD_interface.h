@@ -15,7 +15,7 @@ class SDCARD{
     private:
     char path[30];
     FATFileSystem fs;
-    SDBlockDevice sd;
+    SDBlockDevice _sd;
 
 
 };
