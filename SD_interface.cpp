@@ -33,7 +33,7 @@ bool SDCARD::init(){
     mkdir("/sd/data",0777);
     
     int i = 0;
-    FILE* fp;
+    
     while(1){
         i++;
         sprintf(path, "/sd/data/%03i.csv", i);
@@ -53,7 +53,7 @@ bool SDCARD::init(){
             return 0;
         }
     }
-    fclose(fp);
+    //fclose(fp);
     init_success = true;
     return 1;
 }
@@ -62,12 +62,12 @@ bool SDCARD::init(){
 bool SDCARD::write2sd(char *data, int l){
     if(!init_success) return 0;
 
-    FILE* fp = fopen(path, "a");
+    //FILE* fp = fopen(path, "a");
     if(fp == NULL){
         return 0;
     }
     fprintf(fp, "%s", data);
-    fclose(fp);
+    //fclose(fp);
 
     return 1;
 }
