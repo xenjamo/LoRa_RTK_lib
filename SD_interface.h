@@ -13,6 +13,7 @@ class SDCARD{
     bool writeln();
 
     private:
+    bool init_success;
     char path[30];
     FATFileSystem fs;
     SDBlockDevice _sd;
