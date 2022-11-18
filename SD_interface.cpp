@@ -7,7 +7,7 @@
 
 
 
-SDCARD::SDCARD() : fs(MOUNT_PATH), _sd(PC_12, PC_11, PC_10, PD_2){
+SDCARD::SDCARD(int l) : fs("sd"), _sd(PC_12, PC_11, PC_10, PD_2){
     
     //nothing special here
 
@@ -26,25 +26,30 @@ bool SDCARD::init(){
         return 0;
     }
     fflush(stdout);
+    mkdir("/sd/data",0777);
+    
     int i = 0;
-    char buf[] = "RTK_GPS_data\n";
     FILE* fp;
     while(1){
         i++;
         sprintf(path, "/sd/data/%02i.csv", i);
         fp = fopen(path, "r");
         if(fp == NULL){
-            fclose(fp);
-            write2sd(buf, sizeof(buf));
+            fp = fopen(path, "w");
+            fprintf(fp,"RTK_GPS_DATA\n");
+
+            printf("working in file: %s",path);
             break;
         } else {
             fclose(fp);
         }
         if(i >= 99){
             printf("maximum files reached\n");
+            fclose(fp);
             return 0;
         }
     }
+    fclose(fp);
 
     return 1;
 }

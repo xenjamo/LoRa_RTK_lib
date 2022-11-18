@@ -6,7 +6,7 @@
 
 class SDCARD{
     public:
-    SDCARD();
+    SDCARD(int l);
 
     bool init();
     bool write2sd(char* data, int l);
