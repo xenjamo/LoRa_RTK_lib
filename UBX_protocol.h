@@ -21,6 +21,7 @@ class UBX_MSG{
     bool ubx2string(char* buf, uint16_t &len);
     bool clear();
     private:
+    bool header_called;
     void insertsemi(char* dst, uint16_t &offset);
     void insert2array(char* dst, char* src, uint16_t len, uint16_t &offset);
 

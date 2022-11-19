@@ -10,6 +10,7 @@ UBX_MSG::UBX_MSG(){
     id = 0;
     length = 0;
     isvalid = 0;
+    header_called = false;
     data = (uint8_t*)calloc(5,1);
 
 }
@@ -48,9 +49,9 @@ bool UBX_MSG::clear(){
 }
 
 bool UBX_MSG::ubxHeader(char *buf, uint16_t &len){
-    static bool called = 0;
     
-    if(called) return 0;
+    
+    if(header_called) return 0;
 
     uint16_t offset = 0;
     uint16_t l = 0;
@@ -60,29 +61,29 @@ bool UBX_MSG::ubxHeader(char *buf, uint16_t &len){
         case(0x01):
         switch(id){
             case(0x3b):
-            l = sprintf(temp, "name;ver;iTOW [ms];dur;meanX [cm];meanY [cm];meanZ [cm];meanXHP [0.1 mm];meanYHP [0.1 mm];meanZHP [0.1 mm];meanAcc HP [0.1 mm];obs;valid;active;")+1;
+            l = sprintf(temp, "SVIN;ver;iTOW [ms];dur;meanX [cm];meanY [cm];meanZ [cm];meanXHP [0.1 mm];meanYHP [0.1 mm];meanZHP [0.1 mm];meanAcc HP [0.1 mm];obs;valid;active;")+1;
             insert2array(buf,temp,l,offset);
             break;
             case(0x03):
-            l = sprintf(temp, "name;iTOW [ms];gpsFix;gpsFixOk;diffSol;wknSet;towSet;diffCorr;carrSolValid;mapMatching;psmState;spoofDetState;carrSoln;ttff;msss;")+1;
+            l = sprintf(temp, "STATUS;iTOW [ms];gpsFix;gpsFixOk;diffSol;wknSet;towSet;diffCorr;carrSolValid;mapMatching;psmState;spoofDetState;carrSoln;ttff;msss;")+1;
             insert2array(buf,temp,l,offset);
             break;
             case(0x02):
-            l = sprintf(temp, "name;iTOW [ms];lon [deg];lat [deg];heigth [mm];hMSL [mm];hAcc [mm];vAcc [mm];")+1;
+            l = sprintf(temp, "POSLLH;iTOW [ms];lon [deg];lat [deg];heigth [mm];hMSL [mm];hAcc [mm];vAcc [mm];")+1;
             insert2array(buf,temp,l,offset);
             break;
-            case(0x014):
-            l = sprintf(temp, "name;ver;invalidLlh;iTOW [ms];lon [deg];lat [deg];heigth [mm];hMSL [mm];lon HP [deg];lat HP [deg];height HP [0.1 mm];hMSL HP [0.1 mm];hAcc [0.1 mm];vAcc [0.1 mm];")+1;
+            case(0x14):
+            l = sprintf(temp, "HPPOSLLH;ver;invalidLlh;iTOW [ms];lon [deg];lat [deg];heigth [mm];hMSL [mm];lon HP [deg];lat HP [deg];height HP [0.1 mm];hMSL HP [0.1 mm];hAcc [0.1 mm];vAcc [0.1 mm];")+1;
             insert2array(buf, temp, l, offset);
             break;
             case(0x3c):
-            l = sprintf(temp, "name;ver;revID;iTOW [ms];relposN[cm];relposE [cm];relposD [cm];dist [cm];heading [deg];relposNHP [0.1 mm];relposEHP [0.1 mm];relposDHP [0.1 mm];dist HP [0.1 mm];accN [0.1 mm];accE [0.1 mm];accD [0.1 mm];accDist [0.1 mm];accHead [deg];gnssFixOk;diffSoln;relPosValid;carrSoln;isMoving;refPosMiss;refOpsMiss;relPosHeadValid;relPosNormalized;")+1;
+            l = sprintf(temp, "RELPOSNED;ver;revID;iTOW [ms];relposN[cm];relposE [cm];relposD [cm];dist [cm];heading [deg];relposNHP [0.1 mm];relposEHP [0.1 mm];relposDHP [0.1 mm];dist HP [0.1 mm];accN [0.1 mm];accE [0.1 mm];accD [0.1 mm];accDist [0.1 mm];accHead [deg];gnssFixOk;diffSoln;relPosValid;carrSoln;isMoving;refPosMiss;refOpsMiss;relPosHeadValid;relPosNormalized;")+1;
             insert2array(buf,temp,l,offset);
             break;
         }
         break;
     }
-    called = true;
+    header_called = true;
     return 1;
 }
 
@@ -169,6 +170,7 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[0] | ((uint32_t)data[1] << 8) | ((uint32_t)data[2] << 16) | ((uint32_t)data[ 3] << 24);
             l = sprintf(temp, "%u;",utemp32[0])+1;
+            insert2array(buf, temp, l, offset);
             temp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[ 6] << 16) | ((uint32_t)data[ 7] << 24);
             temp32[1] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24);
             tempf[0] = (double)temp32[0] / 10000000;
@@ -194,6 +196,7 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[6] << 16) | ((uint32_t)data[ 7] << 24);
             l = sprintf(temp, "%d;",utemp32[0])+1;
+            insert2array(buf, temp, l, offset);
             temp32[0] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24);
             temp32[1] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
             tempf[0] = (double)temp32[0] / 10000000;
