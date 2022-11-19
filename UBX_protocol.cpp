@@ -178,8 +178,8 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             l = sprintf(temp, "%3.7f;%3.7f;",tempf[0],tempf[1])+1;
             insert2array(buf, temp, l, offset);
             temp32[0] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
-            utemp32[0] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24);
-            l = sprintf(temp, "%d;%d;",temp32[0],utemp32[0])+1;
+            temp32[1] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24);
+            l = sprintf(temp, "%d;%d;",temp32[0],temp32[1])+1;
             insert2array(buf, temp, l, offset);
             utemp32[0] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
             utemp32[1] = (uint32_t)data[24] | ((uint32_t)data[25] << 8) | ((uint32_t)data[26] << 16) | ((uint32_t)data[27] << 24);
@@ -204,8 +204,8 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             l = sprintf(temp, "%3.7f;%3.7f;",tempf[0],tempf[1])+1;
             insert2array(buf, temp, l, offset);
             temp32[0] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24);
-            utemp32[0] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
-            l = sprintf(temp, "%d;%u;",temp32[0],utemp32[0])+1;
+            temp32[1] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
+            l = sprintf(temp, "%d;%d;",temp32[0],temp32[1])+1;
             insert2array(buf, temp, l, offset);
             l = sprintf(temp, "%1.9f;%1.9f;",((double)(int8_t)data[24]) / 1000000000,((double)(int8_t)data[25]) / 1000000000)+1;
             insert2array(buf, temp, l, offset);
