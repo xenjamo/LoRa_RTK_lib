@@ -17,6 +17,7 @@ class UBX_MSG{
     uint8_t ch_[2];
     void encode(uint8_t *buf, uint16_t &len);
     uint16_t getlength();
+    bool ubxHeader(char* buf, uint16_t &len);
     bool ubx2string(char* buf, uint16_t &len);
     bool clear();
     private:

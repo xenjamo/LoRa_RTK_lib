@@ -47,6 +47,44 @@ bool UBX_MSG::clear(){
     return 1;
 }
 
+bool UBX_MSG::ubxHeader(char *buf, uint16_t &len){
+    static bool called = 0;
+    
+    if(called) return 0;
+
+    uint16_t offset = 0;
+    uint16_t l = 0;
+    char temp[400];
+
+    switch(_class){
+        case(0x01):
+        switch(id){
+            case(0x3b):
+            l = sprintf(temp, "name;ver;iTOW [ms];dur;meanX [cm];meanY [cm];meanZ [cm];meanXHP [0.1 mm];meanYHP [0.1 mm];meanZHP [0.1 mm];meanAcc HP [0.1 mm];obs;valid;active;")+1;
+            insert2array(buf,temp,l,offset);
+            break;
+            case(0x03):
+            l = sprintf(temp, "name;iTOW [ms];gpsFix;gpsFixOk;diffSol;wknSet;towSet;diffCorr;carrSolValid;mapMatching;psmState;spoofDetState;carrSoln;ttff;msss;")+1;
+            insert2array(buf,temp,l,offset);
+            break;
+            case(0x02):
+            l = sprintf(temp, "name;iTOW [ms];lon [deg];lat [deg];heigth [mm];hMSL [mm];hAcc [mm];vAcc [mm];")+1;
+            insert2array(buf,temp,l,offset);
+            break;
+            case(0x014):
+            l = sprintf(temp, "name;ver;invalidLlh;iTOW [ms];lon [deg];lat [deg];heigth [mm];hMSL [mm];lon HP [deg];lat HP [deg];height HP [0.1 mm];hMSL HP [0.1 mm];hAcc [0.1 mm];vAcc [0.1 mm];")+1;
+            insert2array(buf, temp, l, offset);
+            break;
+            case(0x3c):
+            l = sprintf(temp, "name;ver;revID;iTOW [ms];relposN[cm];relposE [cm];relposD [cm];dist [cm];heading [deg];relposNHP [0.1 mm];relposEHP [0.1 mm];relposDHP [0.1 mm];dist HP [0.1 mm];accN [0.1 mm];accE [0.1 mm];accD [0.1 mm];accDist [0.1 mm];accHead [deg];gnssFixOk;diffSoln;relPosValid;carrSoln;isMoving;refPosMiss;refOpsMiss;relPosHeadValid;relPosNormalized;")+1;
+            insert2array(buf,temp,l,offset);
+            break;
+        }
+        break;
+    }
+    called = true;
+    return 1;
+}
 
 // decodes each message according to interface discription:
 // (https://content.u-blox.com/sites/default/files/u-blox_ZED-F9H_InterfaceDescription_%28UBX-19030118%29.pdf) (last checked 09.11.2022)
