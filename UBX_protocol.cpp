@@ -190,29 +190,29 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             case(0x14):
             l = sprintf(temp, "-HPPOSLLH;")+1;
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "0x%02x;", data[0])+1;
+            l = sprintf(temp, "0x%02x;", data[0])+1; //version
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;", data[3] & 0x01)+1;
+            l = sprintf(temp, "%d;", data[3] & 0x01)+1; //invalid LLH
             insert2array(buf, temp, l, offset);
-            utemp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[6] << 16) | ((uint32_t)data[ 7] << 24);
+            utemp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[6] << 16) | ((uint32_t)data[ 7] << 24); //itow
             l = sprintf(temp, "%d;",utemp32[0])+1;
             insert2array(buf, temp, l, offset);
-            temp32[0] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24);
-            temp32[1] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
+            temp32[0] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24); //lon
+            temp32[1] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24); //lat
             tempf[0] = (double)temp32[0] / 10000000;
             tempf[1] = (double)temp32[1] / 10000000;
             l = sprintf(temp, "%3.7f;%3.7f;",tempf[0],tempf[1])+1;
             insert2array(buf, temp, l, offset);
-            temp32[0] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24);
-            temp32[1] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
+            temp32[0] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24); //height
+            temp32[1] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24); //hMSL
             l = sprintf(temp, "%d;%d;",temp32[0],temp32[1])+1;
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%1.9f;%1.9f;",((double)(int8_t)data[24]) / 1000000000,((double)(int8_t)data[25]) / 1000000000)+1;
+            l = sprintf(temp, "%1.9f;%1.9f;",((double)(int8_t)data[24]) / 1000000000,((double)(int8_t)data[25]) / 1000000000)+1; //lon/lat HP
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;%d;",(int8_t)data[26],(int8_t)data[27])+1;
+            l = sprintf(temp, "%d;%d;",(int8_t)data[26],(int8_t)data[27])+1; //height/hMSL HP
             insert2array(buf, temp, l, offset);
-            utemp32[0] = (uint32_t)data[28] | ((uint32_t)data[29] << 8) | ((uint32_t)data[30] << 16) | ((uint32_t)data[31] << 24);
-            utemp32[1] = (uint32_t)data[32] | ((uint32_t)data[33] << 8) | ((uint32_t)data[34] << 16) | ((uint32_t)data[35] << 24);
+            utemp32[0] = (uint32_t)data[28] | ((uint32_t)data[29] << 8) | ((uint32_t)data[30] << 16) | ((uint32_t)data[31] << 24); //hAcc
+            utemp32[1] = (uint32_t)data[32] | ((uint32_t)data[33] << 8) | ((uint32_t)data[34] << 16) | ((uint32_t)data[35] << 24); //vAcc
             l = sprintf(temp, "%u;%u;",utemp32[0],utemp32[1])+1;
             insert2array(buf, temp, l, offset);
 
@@ -220,53 +220,53 @@ bool UBX_MSG::ubx2string(char *buf, uint16_t &len){
             case(0x3c):
             l = sprintf(temp, "-RELPOSNED;")+1;
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "0x%02x;", data[0])+1;
+            l = sprintf(temp, "0x%02x;", data[0])+1; //version
             insert2array(buf, temp, l, offset);
-            utemp16[0] = (uint16_t)data[2] | ((uint16_t)data[3] << 8);
-            utemp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[6] << 16) | ((uint32_t)data[7] << 24);
+            utemp16[0] = (uint16_t)data[2] | ((uint16_t)data[3] << 8); //ref ID
+            utemp32[0] = (uint32_t)data[4] | ((uint32_t)data[5] << 8) | ((uint32_t)data[6] << 16) | ((uint32_t)data[7] << 24); //itow
             l = sprintf(temp, "%u;%u;",utemp16[0],utemp32[0])+1;
             insert2array(buf, temp, l, offset);
-            temp32[0] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24);
-            temp32[1] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24);
-            temp32[2] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24);
+            temp32[0] = (uint32_t)data[8] | ((uint32_t)data[9] << 8) | ((uint32_t)data[10] << 16) | ((uint32_t)data[11] << 24); //relpos N
+            temp32[1] = (uint32_t)data[12] | ((uint32_t)data[13] << 8) | ((uint32_t)data[14] << 16) | ((uint32_t)data[15] << 24); //relpos E
+            temp32[2] = (uint32_t)data[16] | ((uint32_t)data[17] << 8) | ((uint32_t)data[18] << 16) | ((uint32_t)data[19] << 24); //relpos D
             l = sprintf(temp, "%d;%d;%d;",temp32[0],temp32[1],temp32[2])+1;
             insert2array(buf, temp, l, offset);
-            utemp32[0] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24);
-            temp32[0] = (uint32_t)data[24] | ((uint32_t)data[25] << 8) | ((uint32_t)data[26] << 16) | ((uint32_t)data[27] << 24);
+            utemp32[0] = (uint32_t)data[20] | ((uint32_t)data[21] << 8) | ((uint32_t)data[22] << 16) | ((uint32_t)data[23] << 24); //relpos length
+            temp32[0] = (uint32_t)data[24] | ((uint32_t)data[25] << 8) | ((uint32_t)data[26] << 16) | ((uint32_t)data[27] << 24); //relpos hedaing
             tempf[0] = (double)temp32[0] / 100000;
             l = sprintf(temp, "%u;%3.5f;",utemp32[0],tempf[0])+1;
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;%d;%d;",(int8_t)data[32],(int8_t)data[33],(int8_t)data[34])+1;
+            l = sprintf(temp, "%d;%d;%d;",(int8_t)data[32],(int8_t)data[33],(int8_t)data[34])+1; //relpos NED HP
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(int8_t)data[35])+1;
+            l = sprintf(temp, "%d;",(int8_t)data[35])+1; //relpos length HP
             insert2array(buf, temp, l, offset);
-            utemp32[0] = (uint32_t)data[36] | ((uint32_t)data[37] << 8) | ((uint32_t)data[38] << 16) | ((uint32_t)data[39] << 24);
-            utemp32[1] = (uint32_t)data[40] | ((uint32_t)data[41] << 8) | ((uint32_t)data[42] << 16) | ((uint32_t)data[43] << 24);
-            utemp32[2] = (uint32_t)data[44] | ((uint32_t)data[45] << 8) | ((uint32_t)data[46] << 16) | ((uint32_t)data[47] << 24);
+            utemp32[0] = (uint32_t)data[36] | ((uint32_t)data[37] << 8) | ((uint32_t)data[38] << 16) | ((uint32_t)data[39] << 24); //acc N
+            utemp32[1] = (uint32_t)data[40] | ((uint32_t)data[41] << 8) | ((uint32_t)data[42] << 16) | ((uint32_t)data[43] << 24); //acc E
+            utemp32[2] = (uint32_t)data[44] | ((uint32_t)data[45] << 8) | ((uint32_t)data[46] << 16) | ((uint32_t)data[47] << 24); //acc D
             l = sprintf(temp, "%u;%u;%u;",utemp32[0],utemp32[1],utemp32[2])+1;
             insert2array(buf, temp, l, offset);
-            utemp32[0] = (uint32_t)data[48] | ((uint32_t)data[49] << 8) | ((uint32_t)data[50] << 16) | ((uint32_t)data[51] << 24);
-            temp32[0] = (uint32_t)data[52] | ((uint32_t)data[53] << 8) | ((uint32_t)data[54] << 16) | ((uint32_t)data[55] << 24);
+            utemp32[0] = (uint32_t)data[48] | ((uint32_t)data[49] << 8) | ((uint32_t)data[50] << 16) | ((uint32_t)data[51] << 24); //acc length
+            temp32[0] = (uint32_t)data[52] | ((uint32_t)data[53] << 8) | ((uint32_t)data[54] << 16) | ((uint32_t)data[55] << 24);  //acc heading
             tempf[0] = (double)temp32[0] / 100000;
             l = sprintf(temp, "%u;%f;",utemp32[0],tempf[0])+1;
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(data[60] >> 0) & 0x01)+1;
+            l = sprintf(temp, "%d;",(data[60] >> 0) & 0x01)+1; //gnss fix
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(data[60] >> 1) & 0x01)+1;
+            l = sprintf(temp, "%d;",(data[60] >> 1) & 0x01)+1; //diff soln
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(data[60] >> 2) & 0x01)+1;
+            l = sprintf(temp, "%d;",(data[60] >> 2) & 0x01)+1; //relpos valid
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(data[60] >> 3) & 0x03)+1;
+            l = sprintf(temp, "%d;",(data[60] >> 3) & 0x03)+1; //carrSoln
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(data[60] >> 5) & 0x01)+1;
+            l = sprintf(temp, "%d;",(data[60] >> 5) & 0x01)+1; //is moving
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(data[60] >> 6) & 0x01)+1;
+            l = sprintf(temp, "%d;",(data[60] >> 6) & 0x01)+1; //refposmiss
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(data[60] >> 7) & 0x01)+1;
+            l = sprintf(temp, "%d;",(data[60] >> 7) & 0x01)+1; //refobsmiss
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(data[61] >> 0) & 0x01)+1;
+            l = sprintf(temp, "%d;",(data[61] >> 0) & 0x01)+1; //relpos heading valid
             insert2array(buf, temp, l, offset);
-            l = sprintf(temp, "%d;",(data[61] >> 1) & 0x01)+1;
+            l = sprintf(temp, "%d;",(data[61] >> 1) & 0x01)+1; //relpos normalized
             insert2array(buf, temp, l, offset);
 
 

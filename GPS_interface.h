@@ -49,6 +49,22 @@ class RTCM3_UBLOX{
     DigitalOut led1;
     bool reached_max_msg;
 
+    //the intresting values
+    uint32_t itow;
+    double lon;
+    double lat;
+    double height;
+    //
+    double rel_x;
+    double rel_y;
+    double rel_z;
+    //
+    uint8_t rtk_stat;
+    double hAcc;
+    double vAcc;
+
+    bool reset_pos();
+
     //basic functions
     bool msg_activity();
     bool data_ready();
@@ -72,6 +88,7 @@ class RTCM3_UBLOX{
     private:
     //UnbufferedSerial *_serial_port;
     void rx_interrupt_handler();
+    bool decodeUBX();
     char c; // most important char ever lol
     
 

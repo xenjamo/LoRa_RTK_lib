@@ -41,6 +41,23 @@ bool RTCM3_UBLOX::init(){
 }
 
 
+bool RTCM3_UBLOX::reset_pos(){
+    itow = 0;
+    lon = 0.0f;
+    lat = 0.0f;
+    height = 0.0f;
+    
+    rel_x = 0.0f;
+    rel_y = 0.0f;
+    rel_z = 0.0f;
+    
+    rtk_stat = 0;
+    hAcc = 0;
+    vAcc = 0;
+    return true;
+}
+
+
 //returns 0 when no activity 1 when data is arriving (theoreticly)
 bool RTCM3_UBLOX::msg_activity(){
     //led1 = !led1;
@@ -217,6 +234,10 @@ bool RTCM3_UBLOX::decode(){
         
 
     }
+
+    decodeUBX(); //decode diffrent ubx messages and store its values in this object
+
+
     return 1;
 }
 
@@ -293,6 +314,71 @@ void RTCM3_UBLOX::rx_interrupt_handler()
 
 }
 
+
+
+bool RTCM3_UBLOX::decodeUBX(){
+    int i = 0;
+    while(ubx[i].isvalid){
+        switch(ubx[i]._class){
+            case(0x01):
+            //
+            switch(ubx[i].id){
+                case(0x14):{
+                    itow = (uint32_t)ubx[i].data[4] | ((uint32_t)ubx[i].data[5] << 8) | ((uint32_t)ubx[i].data[6] << 16) | ((uint32_t)ubx[i].data[ 7] << 24);
+                    // LL LP
+                    int32_t temp32_1 = (uint32_t)ubx[i].data[ 8] | ((uint32_t)ubx[i].data[ 9] << 8) | ((uint32_t)ubx[i].data[10] << 16) | ((uint32_t)ubx[i].data[11] << 24); //lon
+                    int32_t temp32_2 = (uint32_t)ubx[i].data[12] | ((uint32_t)ubx[i].data[13] << 8) | ((uint32_t)ubx[i].data[14] << 16) | ((uint32_t)ubx[i].data[15] << 24); //lat
+                    lon = (double)temp32_1 / 10000000;
+                    lat = (double)temp32_2 / 10000000;
+                    // height LP
+                    temp32_1 = (uint32_t)ubx[i].data[16] | ((uint32_t)ubx[i].data[17] << 8) | ((uint32_t)ubx[i].data[18] << 16) | ((uint32_t)ubx[i].data[19] << 24); //height
+                    height = (double)temp32_1 / 1000;
+
+                    // LL HP
+                    lon = lon + ((double)(int8_t)ubx[i].data[24]) / 1000000000;
+                    lat = lat + ((double)(int8_t)ubx[i].data[25]) / 1000000000;
+                    // height HP
+                    height = height + (double)(int8_t)ubx[i].data[26] / 10000;
+
+                    hAcc = (double)(int32_t)((uint32_t)ubx[i].data[28] | ((uint32_t)ubx[i].data[29] << 8) | ((uint32_t)ubx[i].data[30] << 16) | ((uint32_t)ubx[i].data[31] << 24)) / 10000; //hAcc
+                    vAcc = (double)(int32_t)((uint32_t)ubx[i].data[32] | ((uint32_t)ubx[i].data[33] << 8) | ((uint32_t)ubx[i].data[34] << 16) | ((uint32_t)ubx[i].data[35] << 24)) / 10000; //vAcc
+                    break;
+                }
+                case(0x3c):{
+                    itow = (uint32_t)ubx[i].data[4] | ((uint32_t)ubx[i].data[5] << 8) | ((uint32_t)ubx[i].data[6] << 16) | ((uint32_t)ubx[i].data[7] << 24); //itow
+                    
+                    rel_x = (double)(int32_t)((uint32_t)ubx[i].data[ 8] | ((uint32_t)ubx[i].data[ 9] << 8) | ((uint32_t)ubx[i].data[10] << 16) | ((uint32_t)ubx[i].data[11] << 24))*10; //relpos N
+                    rel_y = (double)(int32_t)((uint32_t)ubx[i].data[12] | ((uint32_t)ubx[i].data[13] << 8) | ((uint32_t)ubx[i].data[14] << 16) | ((uint32_t)ubx[i].data[15] << 24))*10; //relpos E
+                    rel_z = (double)(int32_t)((uint32_t)ubx[i].data[16] | ((uint32_t)ubx[i].data[17] << 8) | ((uint32_t)ubx[i].data[18] << 16) | ((uint32_t)ubx[i].data[19] << 24))*10; //relpos D
+
+                    rel_x = rel_x + (double)(int8_t)ubx[i].data[32] / 10;
+                    rel_y = rel_y + (double)(int8_t)ubx[i].data[33] / 10;
+                    rel_z = rel_z + (double)(int8_t)ubx[i].data[34] / 10;
+
+                    rtk_stat = (ubx[i].data[60] >> 3) & 0x03;
+                    break;
+                }
+
+                case(0x03):{
+                    //nothing here
+                    break;
+                }
+
+                default:
+                printf("id 0x%x not supported",ubx[i].id);
+                break;
+            }
+            break;
+            default:
+            printf("class 0x%x not supported\n", ubx[i]._class);
+            return 0;
+            break;
+        }
+        i++;
+    }
+
+    return 1;
+}
 
 
 //set all values of an array to 0
