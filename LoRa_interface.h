@@ -289,11 +289,14 @@ class RFM95
     uint8_t n_payloads;
     uint8_t n_payloads_sent;
     uint8_t n_tries; //number of atemped transmits
+    bool snr_valid;
+    bool rssi_valid;
     event_ event_handler();
     bool waitForTransmission();
     uint8_t get_n_payloads(uint16_t len);
     int8_t getSNR();
     int8_t getRSSI();
+    bool signal_valid();
 	mode_ mode;
 	event_ event;
 

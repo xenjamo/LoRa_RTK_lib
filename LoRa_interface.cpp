@@ -150,12 +150,19 @@ uint8_t RFM95::get_n_payloads(uint16_t len){
 }
 
 int8_t RFM95::getSNR(){
+    snr_valid = false;
     return _lastSNR;
 }
 int8_t RFM95::getRSSI(){
+    rssi_valid = false;
     return _lastRssi;
 }
-
+bool RFM95::signal_valid(){
+    if(snr_valid && rssi_valid){
+        return 1;
+    }
+    return 0;
+}
 
 void RFM95::isr_flagger(){
 
@@ -319,9 +326,12 @@ void RFM95::readRxData(){
     _bufLen = len;
     _rx_valid = true;
     
+    
 
     _lastSNR = (int8_t)read(RH_RF95_REG_19_PKT_SNR_VALUE) /4;// quality of packet signal to noise ratio
-	_lastRssi = -137 + read(RH_RF95_REG_1A_PKT_RSSI_VALUE);//no clue what this is
+	_lastRssi = -137 + read(RH_RF95_REG_1A_PKT_RSSI_VALUE); //signal strength indicator nominal range -120 to 30
+    snr_valid = true;
+    rssi_valid = true;
     //printf("RSSI: 0x%x\tSNR: 0x%x",_LastRssi,LastSNR);
 }
 
