@@ -1124,7 +1124,7 @@ void LSM9DS1::initI2C()
     /* 
     Wire.begin();   // Initialize I2C library
     */
-    
+    i2c.frequency(400000);
     //already initialized in constructor!
 }
 

@@ -17,9 +17,11 @@
 RTCM3_UBLOX::RTCM3_UBLOX(UnbufferedSerial *uart) : led1(LED1){
 
     _serial_port = uart; //pointer magic
-    rtcm_msg = (uint8_t*) malloc(2000); //allocate memory in heap (stacksize to small)
+    rtcm_msg = (uint8_t*) malloc(MAXIMUM_RTCM_MESSAGE_LENGTH*MAXIMUM_RTCM_MESSAGES); //allocate memory in heap (stacksize to small)
+    uart_buf = (uint8_t*) malloc(MAXIMUM_RTCM_MESSAGE_LENGTH*MAXIMUM_RTCM_MESSAGES);
     
     clear_buf(rtcm_msg, MAXIMUM_RTCM_MESSAGE_LENGTH*MAXIMUM_RTCM_MESSAGES); //set all to 0 else it will cause issues
+    clear_buf(uart_buf, MAXIMUM_RTCM_MESSAGE_LENGTH*MAXIMUM_RTCM_MESSAGES);
 }
 
 
@@ -37,6 +39,7 @@ bool RTCM3_UBLOX::init(){
     _serial_port->attach(callback(this, &RTCM3_UBLOX::rx_interrupt_handler), SerialBase::RxIrq); //start isr
     while(!msg_activity()); //wait a msg cycle else uC could start reading mid reception and create errors
     clearAll();
+    clearUART();
     return 1;
 }
 
@@ -70,8 +73,15 @@ bool RTCM3_UBLOX::msg_activity(){
     }
     return 1;
 }
+
 bool RTCM3_UBLOX::data_ready(){
-    return (msg_pos == MSG_DATA) & !msg_activity();
+    if((msg_pos == MSG_DATA) & !msg_activity()){
+        memcpy(rtcm_msg, uart_buf, uart_buf_pointer);
+        rtcm_msg_length = uart_buf_pointer;
+        clearUART();
+        return 1;
+    }
+    return 0;
 }
 
 
@@ -157,7 +167,13 @@ bool RTCM3_UBLOX::clearAll(){
     reached_max_msg = 0;
     rtcm_msg_pointer = 0;
     rtcm_msg_length = 0;
+    return 1;
+}
+
+bool RTCM3_UBLOX::clearUART(){
+    clear_buf(uart_buf, MAXIMUM_RTCM_MESSAGE_LENGTH*MAXIMUM_RTCM_MESSAGES);
     msg_pos = MSG_IDLE;
+    uart_buf_pointer = 0;
     return 1;
 }
 
@@ -226,7 +242,7 @@ bool RTCM3_UBLOX::decode(){
         }else{
             rtcm_msg_length = p_offset;
             loop = 0;
-            printf("preamble wrong\n");
+            printf("preamble wrong: 0x%02x\n", first_byte);
             return 0;
         }
         
@@ -300,13 +316,13 @@ void RTCM3_UBLOX::rx_interrupt_handler()
     _serial_port->read(&c,1); //read this byte
     t.reset();                  //reset timer to indicate a read
     isactive = 1;               //set to 1 so we know this function has been called
-    rtcm_msg[rtcm_msg_pointer] = c; //save read message
-    rtcm_msg_pointer++;             //advance pointer
+    uart_buf[uart_buf_pointer] = c; //save read message
+    uart_buf_pointer++;             //advance pointer
     msg_pos = MSG_DATA;             //indicate we are receiving data
 
 
     //if pointer gets out of bounds it creates errors so here we set a flag to indicate the buffer is full or faulty
-    if(rtcm_msg_pointer > MAXIMUM_RTCM_MESSAGE_LENGTH*MAXIMUM_RTCM_MESSAGES){
+    if(uart_buf_pointer > MAXIMUM_RTCM_MESSAGE_LENGTH*MAXIMUM_RTCM_MESSAGES){
         msg_pos = MSG_ERR;
     }
     
@@ -340,8 +356,8 @@ bool RTCM3_UBLOX::decodeUBX(){
                     // height HP
                     height = height + (double)(int8_t)ubx[i].data[26] / 10000;
 
-                    hAcc = (double)(int32_t)((uint32_t)ubx[i].data[28] | ((uint32_t)ubx[i].data[29] << 8) | ((uint32_t)ubx[i].data[30] << 16) | ((uint32_t)ubx[i].data[31] << 24)) / 10000; //hAcc
-                    vAcc = (double)(int32_t)((uint32_t)ubx[i].data[32] | ((uint32_t)ubx[i].data[33] << 8) | ((uint32_t)ubx[i].data[34] << 16) | ((uint32_t)ubx[i].data[35] << 24)) / 10000; //vAcc
+                    hAcc = (double)(int32_t)((uint32_t)ubx[i].data[28] | ((uint32_t)ubx[i].data[29] << 8) | ((uint32_t)ubx[i].data[30] << 16) | ((uint32_t)ubx[i].data[31] << 24)) / 10; //hAcc
+                    vAcc = (double)(int32_t)((uint32_t)ubx[i].data[32] | ((uint32_t)ubx[i].data[33] << 8) | ((uint32_t)ubx[i].data[34] << 16) | ((uint32_t)ubx[i].data[35] << 24)) / 10; //vAcc
                     break;
                 }
                 case(0x3c):{

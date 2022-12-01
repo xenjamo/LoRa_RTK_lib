@@ -38,6 +38,11 @@ class RTCM3_UBLOX{
     uint8_t *rtcm_msg;
     uint16_t rtcm_msg_pointer;
     uint16_t rtcm_msg_length;
+
+    uint8_t *uart_buf;
+    uint16_t uart_buf_pointer;
+    uint16_t uart_buf_length;
+
     bool isactive;
 
     //classes
@@ -83,6 +88,7 @@ class RTCM3_UBLOX{
 
     //clears everything (soft hard reset)
     bool clearAll();
+    bool clearUART();
 
     
     private:
