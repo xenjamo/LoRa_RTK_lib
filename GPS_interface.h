@@ -1,3 +1,9 @@
+
+#ifndef GPS_INTERFACE_H_
+#define GPS_INTERFACE_H_
+
+
+
 #include <cstdint>
 #include <string>
 #include "mbed.h"
@@ -102,3 +108,5 @@ class RTCM3_UBLOX{
 
 };
 void clear_buf(uint8_t *buf, int length);
+
+#endif

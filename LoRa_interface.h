@@ -4,6 +4,8 @@
 *
 *
 */
+#ifndef LORA_INTERFACE_H_
+#define LORA_INTERFACE_H_
 
 #include <cstdint>
 #include "mbed.h"
@@ -322,3 +324,5 @@ class RFM95
     void readRxData();
 
 };
+
+#endif

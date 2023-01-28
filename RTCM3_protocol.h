@@ -1,4 +1,6 @@
 
+#ifndef RTCM_PROTOCOL_H_
+#define RTCM_PROTOCOL_H_
 
 #include <cstdint>
 #include <string>
@@ -26,3 +28,7 @@ class RTCM_MSG{
     private:
     //nothing private yet
 };
+#endif
+
+
+#

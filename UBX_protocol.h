@@ -1,4 +1,7 @@
 
+#ifndef UBX_PROTOCOL_H_
+#define UBX_PROTOCOL_H_
+
 #include <cstdint>
 #include <string>
 
@@ -26,3 +29,5 @@ class UBX_MSG{
     void insert2array(char* dst, char* src, uint16_t len, uint16_t &offset);
 
 };
+
+#endif

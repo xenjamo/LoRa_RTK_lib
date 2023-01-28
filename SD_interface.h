@@ -1,3 +1,7 @@
+#ifndef SD_INTERFACE_H_
+#define SD_INTERFACE_H_
+
+
 #include "mbed.h"
 #include "SDBlockDevice.h"
 #include "FATFileSystem.h"
@@ -21,3 +25,5 @@ class SDCARD{
 
 
 };
+
+#endif
